@@ -2,14 +2,17 @@ use std::io::{ self, Write };
 use futures_util::stream::StreamExt; // Needed for .next() and other stream combinators
 use tokio;
 
-
-use hiramu::OllamaClient;
+use hiramu::ollama::OllamaClientBuilder;
 use hiramu::Chat;
-
 
 #[tokio::main]
 async fn main() {
-    let client = OllamaClient::new("http://localhost:11434".to_string());
+
+    let client = OllamaClientBuilder::new()
+        .url("http://localhost:11434")
+        .default_llm_model("mistral")
+        .build();
+
     let mut chat = Chat::new(&client, "The assistant will act like a pirate".to_string());
 
     loop {
