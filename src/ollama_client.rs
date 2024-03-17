@@ -11,6 +11,7 @@ use std::pin::Pin;
 pub struct OllamaClient {
     client: Client,
     base_url: String,
+    default_llm_model: String,
 }
 
 impl OllamaClient {
@@ -18,6 +19,17 @@ impl OllamaClient {
         Self {
             client: Client::new(),
             base_url,
+            default_llm_model: "mistral".to_string(),
+        }
+    }
+}
+
+impl Default for OllamaClient {
+    fn default() -> Self {
+        Self {
+            client: Client::new(),
+            base_url: "http://localhost:11434".to_string(),
+            default_llm_model: "mistral".to_string(),
         }
     }
 }
@@ -87,5 +99,9 @@ impl LLMClient for OllamaClient {
                 buffer.drain(..offset); // Remove processed lines from the buffer
             }
         })
+    }
+
+    fn default_llm_model(&self) -> String {
+        self.default_llm_model.clone()
     }
 }

@@ -24,7 +24,7 @@ impl<'a> Chat<'a> {
         message: String
     ) -> Pin<Box<dyn Stream<Item = Result<GenerateResponse, HiramuError>> + Send + '_>> {
         let request = GenerateRequest {
-            model: "mistral".to_string(),
+            model: self.client.default_llm_model(),
             prompt: format!("{}: {}", self.system_prompt, message),
         };
     

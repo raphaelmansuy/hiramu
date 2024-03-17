@@ -11,4 +11,6 @@ pub trait LLMClient {
         &self,
         request: GenerateRequest
     ) -> Pin<Box<dyn Stream<Item = Result<GenerateResponse, HiramuError>> + Send>>;
+
+    fn default_llm_model(&self) -> String;
 }
