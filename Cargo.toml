@@ -2,12 +2,23 @@
 name = "hiramu"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+description = "A Rust AI Engineering Toolbox"
+repository = "https://github.com/raphaelmansuy/hiramu"
+keywords = ["api", "client", "async"]
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 tokio = { version = "1.26.0", features = ["full"] }
 serde = { version = "1.0.197", features = ["derive"] }
-reqwest = { version = "0.11.26", features = ["json"] } # Update the version if necessary
+reqwest = { version = "0.11.26", features = ["json","stream"] } # Update the version if necessary
 serde_json = "1.0"
 futures = "0.3.30"
+futures-util = { version = "0.3.30" }
+thiserror = "1.0.58"
+chrono = { version = "0.4.35", features = ["serde"] } # Added chrono crate for date/time handling
+async-stream = "0.3.5"
+pin-utils = "0.1.0"
+

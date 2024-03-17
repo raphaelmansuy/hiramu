@@ -1,31 +1,11 @@
-use std::fmt;
+use serde_json::Error as SerdeJsonError;
+use thiserror::Error;
 
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum HiramuError {
-    Http(reqwest::Error),
-    Io(std::io::Error),
-    // Add more error types as needed
-}
+    #[error("HTTP error: {0}")]
+    Http(#[from] reqwest::Error),
 
-impl fmt::Display for HiramuError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            HiramuError::Http(e) => write!(f, "HTTP error: {}", e),
-            HiramuError::Io(e) => write!(f, "IO error: {}", e),
-        }
-    }
-}
-
-impl std::error::Error for HiramuError {}
-
-impl From<reqwest::Error> for HiramuError {
-    fn from(err: reqwest::Error) -> HiramuError {
-        HiramuError::Http(err)
-    }
-}
-
-impl From<std::io::Error> for HiramuError {
-    fn from(err: std::io::Error) -> HiramuError {
-        HiramuError::Io(err)
-    }
+    #[error("JSON error: {0}")]
+    Json(#[from] SerdeJsonError),
 }
