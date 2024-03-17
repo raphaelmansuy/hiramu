@@ -340,6 +340,7 @@ name = "hiramu"
 version = "0.1.0"
 dependencies = [
  "async-stream",
+ "bytes",
  "chrono",
  "futures",
  "futures-util",

@@ -1,11 +1,11 @@
 use reqwest::Client;
-use serde::Deserialize;
 use serde_json::Error as SerdeJsonError;
 use thiserror::Error;
-use futures_util::stream::{self, Stream, StreamExt};
+use futures_util::stream::{Stream, StreamExt};
 use async_stream::stream;
 use super::models::{GenerateRequest, GenerateResponse};
 use super::error::HiramuError;
+use bytes::Buf;
 
 pub struct HiramuClient {
     client: Client,
@@ -19,6 +19,7 @@ impl HiramuClient {
             base_url,
         }
     }
+
     pub fn generate(&self, request: GenerateRequest) -> impl Stream<Item = Result<GenerateResponse, HiramuError>> + '_ {
         let url = format!("{}/api/generate", self.base_url);
         let client = self.client.clone();
@@ -43,8 +44,6 @@ impl HiramuClient {
                 }
             };
 
-            println!("Received response: {:?}", body);
-
             let mut stream = body.bytes_stream();
             let mut buffer = Vec::new();
 
@@ -56,23 +55,35 @@ impl HiramuClient {
                         return;
                     }
                 };
+
                 buffer.extend_from_slice(&chunk);
 
+                // Process the buffer, splitting by newlines
+                let mut offset = 0;
+                while let Some(newline_idx) = buffer[offset..].iter().position(|&b| b == b'\n') {
+                    let newline_idx = offset + newline_idx;
+                    let line = &buffer[offset..newline_idx];
+                    offset = newline_idx + 1; // Skip past the newline character
 
-                // Attempt to deserialize when a valid JSON object is formed
-                if let Ok(text) = String::from_utf8(buffer.clone()) {
-                    if let Ok(responses) = serde_json::from_str::<Vec<GenerateResponse>>(&text) {
-                        for response in responses {
-                            println!("Received response: {:?}", response.response);
-                            // Clone the response to avoid moving it
-                            yield Ok(response.clone());
-                            if response.done {
-                                return;
+                    // Attempt to deserialize the JSON object
+                    if let Ok(text) = String::from_utf8(line.to_vec()) {
+                        match serde_json::from_str::<GenerateResponse>(&text) {
+                            Ok(response) => {
+                                let done = response.done; // Store the done value before moving `response`
+                                println!("Received response: {:?}", response.response);
+                                yield Ok(response); // `response` is moved here
+                                if done {
+                                    return;
+                                }
+                            },
+                            Err(e) => {
+                                println!("JSON parsing error: {:?}", e);
+                                // Continue processing other lines, even if one line fails to parse
                             }
                         }
-                        buffer.clear();
                     }
                 }
+                buffer.drain(..offset); // Remove processed lines from the buffer
             }
         }
     }
