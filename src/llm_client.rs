@@ -1,7 +1,7 @@
 // disable warning for unused import for StreamExt
 // #[allow(unused_imports)]
-use futures_util::stream::{ Stream, StreamExt };
-use async_stream::stream;
+use futures_util::stream::{ Stream };
+
 use super::models::{ GenerateRequest, GenerateResponse };
 use super::error::HiramuError;
 use std::pin::Pin;

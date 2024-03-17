@@ -2,7 +2,7 @@ use std::io::{ self, Write };
 use futures_util::stream::StreamExt; // Needed for .next() and other stream combinators
 use tokio;
 
-use hiramu::LLMClient;
+
 use hiramu::OllamaClient;
 use hiramu::Chat;
 
