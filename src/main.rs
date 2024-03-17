@@ -40,7 +40,6 @@ async fn main() {
 }
 
 fn prompt_input(prompt: &str) -> Result<String, std::io::Error> {
-    use std::io::{self, Write};
     print!("{}", prompt);
     io::stdout().flush()?;
     let mut input = String::new();
