@@ -1,13 +1,16 @@
-use hiramu::HiramuClient;
-use hiramu::Chat;
+use std::io::{ self, Write };
 use futures_util::stream::StreamExt; // Needed for .next() and other stream combinators
 use tokio;
-use std::io::{ self, Write };
+
+use hiramu::LLMClient;
+use hiramu::OllamaClient;
+use hiramu::Chat;
+
 
 #[tokio::main]
 async fn main() {
-    let client = HiramuClient::new("http://localhost:11434".to_string());
-    let mut chat = Chat::new(client, "The assistant will act like a pirate".to_string());
+    let client = OllamaClient::new("http://localhost:11434".to_string());
+    let mut chat = Chat::new(&client, "The assistant will act like a pirate".to_string());
 
     loop {
         let input = prompt_input("\n> ").unwrap();

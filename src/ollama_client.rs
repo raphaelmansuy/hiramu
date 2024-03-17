@@ -5,28 +5,31 @@ use futures_util::stream::{ Stream, StreamExt };
 use async_stream::stream;
 use super::models::{ GenerateRequest, GenerateResponse };
 use super::error::HiramuError;
+use super::llm_client::LLMClient;
+use std::pin::Pin;
 
-pub struct HiramuClient {
+pub struct OllamaClient {
     client: Client,
     base_url: String,
 }
 
-impl HiramuClient {
+impl OllamaClient {
     pub fn new(base_url: String) -> Self {
         Self {
             client: Client::new(),
             base_url,
         }
     }
+}
 
-    pub fn generate(
+impl LLMClient for OllamaClient {
+    fn generate(
         &self,
         request: GenerateRequest
-    ) -> impl Stream<Item = Result<GenerateResponse, HiramuError>> + '_ {
+    ) -> Pin<Box<dyn Stream<Item = Result<GenerateResponse, HiramuError>> + Send>> {
         let url = format!("{}/api/generate", self.base_url);
         let client = self.client.clone();
-
-        stream! {
+        Box::pin(stream! {
             let response = match client.post(&url).json(&request).send().await {
                 Ok(res) => res,
                 Err(e) => {
@@ -83,6 +86,6 @@ impl HiramuClient {
                 }
                 buffer.drain(..offset); // Remove processed lines from the buffer
             }
-        }
+        })
     }
 }
