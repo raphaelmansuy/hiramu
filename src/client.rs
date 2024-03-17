@@ -70,7 +70,6 @@ impl HiramuClient {
                         match serde_json::from_str::<GenerateResponse>(&text) {
                             Ok(response) => {
                                 let done = response.done; // Store the done value before moving `response`
-                                println!("Received response: {:?}", response.response);
                                 yield Ok(response); // `response` is moved here
                                 if done {
                                     return;
