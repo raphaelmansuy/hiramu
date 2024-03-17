@@ -2,7 +2,7 @@ use super::models::GenerateResponse;
 use super::HiramuClient;
 use super::HiramuError;
 use super::GenerateRequest;
-use futures_util::stream::{Stream, StreamExt}; // Import Stream trait
+use futures_util::stream::{Stream}; // Import Stream trait
 use std::pin::Pin; // For pinning the stream in the return type
 
 pub struct Chat {
