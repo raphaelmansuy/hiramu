@@ -2,7 +2,7 @@ use hiramu::HiramuClient;
 use hiramu::Chat;
 use futures_util::stream::StreamExt; // Needed for .next() and other stream combinators
 use tokio;
-use std::io::{self, Write};
+use std::io::{ self, Write };
 
 #[tokio::main]
 async fn main() {
@@ -24,12 +24,11 @@ async fn main() {
                     // Flush the output to see it immediately without a newline
                     io::stdout().flush().unwrap();
 
-                    
                     // Break if the response is marked as done, or continue processing
                     if response.done {
                         break;
                     }
-                },
+                }
                 Err(e) => {
                     eprintln!("Error: {:?}", e);
                     break;

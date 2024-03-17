@@ -3,9 +3,7 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum HiramuError {
-    #[error("HTTP error: {0}")]
-    Http(#[from] reqwest::Error),
+    #[error("HTTP error: {0}")] Http(#[from] reqwest::Error),
 
-    #[error("JSON error: {0}")]
-    Json(#[from] SerdeJsonError),
+    #[error("JSON error: {0}")] Json(#[from] SerdeJsonError),
 }

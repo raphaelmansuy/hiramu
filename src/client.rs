@@ -1,9 +1,9 @@
 use reqwest::Client;
 // disable warning for unused import for StreamExt
 // #[allow(unused_imports)]
-use futures_util::stream::{Stream, StreamExt};
+use futures_util::stream::{ Stream, StreamExt };
 use async_stream::stream;
-use super::models::{GenerateRequest, GenerateResponse};
+use super::models::{ GenerateRequest, GenerateResponse };
 use super::error::HiramuError;
 
 pub struct HiramuClient {
@@ -19,21 +19,21 @@ impl HiramuClient {
         }
     }
 
-    pub fn generate(&self, request: GenerateRequest) -> impl Stream<Item = Result<GenerateResponse, HiramuError>> + '_ {
+    pub fn generate(
+        &self,
+        request: GenerateRequest
+    ) -> impl Stream<Item = Result<GenerateResponse, HiramuError>> + '_ {
         let url = format!("{}/api/generate", self.base_url);
         let client = self.client.clone();
 
         stream! {
-            let response = match client.post(&url)
-                .json(&request)
-                .send()
-                .await {
-                    Ok(res) => res,
-                    Err(e) => {
-                        yield Err(HiramuError::Http(e));
-                        return;
-                    }
-                };
+            let response = match client.post(&url).json(&request).send().await {
+                Ok(res) => res,
+                Err(e) => {
+                    yield Err(HiramuError::Http(e));
+                    return;
+                }
+            };
 
             let body = match response.error_for_status() {
                 Ok(body) => body,
@@ -73,7 +73,7 @@ impl HiramuClient {
                                 if done {
                                     return;
                                 }
-                            },
+                            }
                             Err(e) => {
                                 println!("JSON parsing error: {:?}", e);
                                 // Continue processing other lines, even if one line fails to parse

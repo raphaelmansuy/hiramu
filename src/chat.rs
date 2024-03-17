@@ -2,7 +2,7 @@ use super::models::GenerateResponse;
 use super::HiramuClient;
 use super::HiramuError;
 use super::GenerateRequest;
-use futures_util::stream::{Stream}; // Import Stream trait
+use futures_util::stream::{ Stream }; // Import Stream trait
 use std::pin::Pin; // For pinning the stream in the return type
 
 pub struct Chat {
@@ -21,7 +21,7 @@ impl Chat {
     // Add the explicit `'_` lifetime bound to the return type
     pub fn add_message(
         &mut self,
-        message: String,
+        message: String
     ) -> Pin<Box<dyn Stream<Item = Result<GenerateResponse, HiramuError>> + Send + '_>> {
         let request = GenerateRequest {
             model: "mistral".to_string(),
