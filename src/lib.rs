@@ -1,8 +1,5 @@
-use reqwest::Client;
-use serde::{Deserialize, Serialize};
-use std::error::Error;
-use std::io::{BufRead, BufReader};
 
+/*
 #[derive(Serialize, Deserialize, Debug)]
 struct GenerateRequest {
     model: String,
@@ -74,4 +71,16 @@ impl Hiramu {
             )))
         }
     }
-}
+}*/
+
+
+mod client;
+mod error;
+mod models;
+
+pub use client::Hiramu;
+pub use error::HiramuError;
+pub use models::{GenerateRequest, GenerateResponse};
+
+#[cfg(test)]
+mod tests;

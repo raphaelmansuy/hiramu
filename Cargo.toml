@@ -10,3 +10,4 @@ tokio = { version = "1.26.0", features = ["full"] }
 serde = { version = "1.0.197", features = ["derive"] }
 reqwest = { version = "0.11.26", features = ["json"] } # Update the version if necessary
 serde_json = "1.0"
+futures = "0.3.30"
