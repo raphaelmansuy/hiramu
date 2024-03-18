@@ -93,7 +93,7 @@ impl LLMClient for OllamaClient {
         )
     }
 
-    fn default_llm_model(&self) -> String {
+    fn get_default_llm_model(&self) -> String {
         self.default_llm_model.clone()
     }
 }
