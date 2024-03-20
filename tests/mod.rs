@@ -1,19 +1,19 @@
 use std::io::{ self, Write };
 use hiramu::ollama::OllamaClientBuilder;
-use hiramu::ollama::OllamaClient;
+
 use hiramu::GenerateRequestBuilder;
-use hiramu::chat::Chat;
+
 use hiramu::LLMClient;
 use futures_util::StreamExt;
-use std::pin::Pin; // For pinning the stream in the return type
-use std::io::Read;
-use reqwest::Client;
-use base64::{ encode, Engine as _ };
+ // For pinning the stream in the return type
 
-use std::error::Error;
-use std::fs::File;
-use std::io::{ Cursor, Read as CursorRead };
-use url::Url;
+
+
+
+
+
+
+
 
 use hiramu::util::fetch_and_base64_encode_image;
 
