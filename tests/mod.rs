@@ -20,12 +20,16 @@ use hiramu::util::fetch_and_base64_encode_image;
 #[tokio::test]
 async fn test_generate() {
     let client = OllamaClientBuilder::new().url("http://localhost:11434").build();
+
+
+    println!("✅ Client created.");
     let request = GenerateRequestBuilder::new(
         "mistral".to_string(),
         "You are talking like a pirate: Explain why France is great country, less than 40 words ?".to_string()
     ).build();
 
     let mut response_stream = client.generate(request);
+    println!("✅ Request sent to the pirate model. 😂");
 
     while let Some(response_result) = response_stream.next().await {
         match response_result {
@@ -53,7 +57,8 @@ async fn test_generate_with_image() {
     // Download and base64 encode the image
     let image = fetch_and_base64_encode_image(image_url).await.unwrap();
 
-    println!("Image: {}", image);
+    println!("✅ Image path: {} downloaded and transformed.", image_url);
+
 
     let client = OllamaClientBuilder::new().url("http://localhost:11434").build();
     let request = GenerateRequestBuilder::new(
@@ -63,7 +68,10 @@ async fn test_generate_with_image() {
         .images(vec![image])
         .build();
 
+
     let mut response_stream = client.generate(request);
+
+    println!("✅ Request sent to the llava model. 🌋");
 
     while let Some(response_result) = response_stream.next().await {
         match response_result {
