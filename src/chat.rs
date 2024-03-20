@@ -1,7 +1,7 @@
 use super::models::GenerateResponse;
 use super::LLMClient;
 use super::HiramuError;
-use super::GenerateRequest;
+use super::{ GenerateRequestBuilder };
 use futures_util::stream::{ Stream }; // Import Stream trait
 use std::pin::Pin; // For pinning the stream in the return type
 
@@ -23,13 +23,14 @@ impl<'a> Chat<'a> {
         &mut self,
         message: String
     ) -> Pin<Box<dyn Stream<Item = Result<GenerateResponse, HiramuError>> + Send + '_>> {
-        let request = GenerateRequest {
-            model: self.client.get_default_llm_model(),
-            prompt: format!("{}: {}", self.system_prompt, message),
-        };
-    
+        
+        let request = GenerateRequestBuilder::new(
+            self.client.get_default_llm_model(),
+            format!("{}: {}", self.system_prompt, message)
+        ).build();
+
         let response_stream = self.client.generate(request);
-    
+
         // Box the stream and make it a dynamic Stream trait object with an explicit lifetime
         // and ensure it is Send
         Box::pin(response_stream)
