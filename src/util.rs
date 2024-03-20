@@ -1,11 +1,11 @@
-use std::io::{ self, Write };
+
 use std::io::Read;
 use reqwest::Client;
-use base64::{ encode, Engine as _ };
+use base64::{ encode };
 
 use std::error::Error;
 use std::fs::File;
-use std::io::{ Cursor, Read as CursorRead };
+use std::io::{ Read as CursorRead };
 use url::Url;
 
 
