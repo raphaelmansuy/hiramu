@@ -57,6 +57,7 @@ async fn test_generate_with_image() {
     // Download and base64 encode the image
     let image = fetch_and_base64_encode_image(image_url).await.unwrap();
 
+
     println!("✅ Image path: {} downloaded and transformed.", image_url);
 
 
