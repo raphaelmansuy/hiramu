@@ -1,44 +1,40 @@
-use std::io::{ self, Write };
-use futures_util::stream::StreamExt; // Needed for .next() and other stream combinators
+use futures_util::stream::StreamExt;
+use hiramu::ollama::models::GenerateRequestBuilder;
+use hiramu::ollama::ollama_client::OllamaClient;
+use std::io::{self, Write};
 use tokio;
-
-use hiramu::ollama::OllamaClientBuilder;
-use hiramu::Chat;
 
 #[tokio::main]
 async fn main() {
-
-    let client = OllamaClientBuilder::new()
-        .url("http://localhost:11434")
-        .default_llm_model("mistral")
-        .build();
-
-    let mut chat = Chat::new(&client, "The assistant will act like a pirate".to_string());
+    let client = OllamaClient::new("http://localhost:11434".to_string());
 
     loop {
         let input = prompt_input("\n> ").unwrap();
+        let request = GenerateRequestBuilder::new("mistral".to_string())
+            .prompt(input)
+            .build();
 
-        // Since add_message now returns a Stream, we need to consume it
-        let mut response_stream = chat.add_message(input);
-
-        // Consume the stream
-        while let Some(response_result) = response_stream.next().await {
-            match response_result {
-                Ok(response) => {
-                    // print the response, we need to flush the output to see it immediately without a newline
-                    print!("{}", response.response);
-                    // Flush the output to see it immediately without a newline
-                    io::stdout().flush().unwrap();
-
-                    // Break if the response is marked as done, or continue processing
-                    if response.done {
-                        break;
+        match client.generate(request).await {
+            Ok(response_stream) => {
+                let mut pinned_stream = Box::pin(response_stream);
+                while let Some(response_result) = pinned_stream.next().await {
+                    match response_result {
+                        Ok(response) => {
+                            print!("{}", response.response);
+                            io::stdout().flush().unwrap();
+                            if response.done {
+                                break;
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!("Error: {:?}", e);
+                            break;
+                        }
                     }
                 }
-                Err(e) => {
-                    eprintln!("Error: {:?}", e);
-                    break;
-                }
+            }
+            Err(e) => {
+                eprintln!("Error: {:?}", e);
             }
         }
     }
