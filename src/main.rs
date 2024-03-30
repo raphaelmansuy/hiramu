@@ -1,17 +1,24 @@
-use futures::stream::TryStream; // Add this import statement
+use std::io::{self, Write};
+
+use futures::stream::TryStream; 
 use futures_util::TryStreamExt;
+use tokio;
+
 use hiramu::ollama::models::ChatRequestBuilder;
 use hiramu::ollama::models::ChatResponse;
 use hiramu::ollama::models::GenerateRequestBuilder;
 use hiramu::ollama::models::Message;
 use hiramu::ollama::ollama_client::FetchStreamError;
 use hiramu::ollama::ollama_client::OllamaClient;
+
 use hiramu::GenerateResponse;
-use std::io::{self, Write};
-use tokio; // Add this import statement
+use hiramu::bedrock::bedrock_client::BedrockClient;
 
 #[tokio::main]
 async fn main() {
+
+    BedrockClient::generate().await.unwrap();
+
     // generate_response_loop().await;
     chat_response_loop().await;
 }
