@@ -1,4 +1,4 @@
-use crate::ollama::models::{GenerateRequest, GenerateResponse};
+use crate::ollama::models::{GenerateRequest, GenerateResponse, ChatRequest, ChatResponse};
 use futures::stream::{TryStreamExt};
 use reqwest::{Client, RequestBuilder};
 use serde::{de::DeserializeOwned};
@@ -79,5 +79,19 @@ impl OllamaClient {
         let stream = fetch_stream::<GenerateResponse>(request).await?;
 
         return Ok(stream);
+    }
+
+    // New chat method
+    pub async fn chat(
+        &self,
+        request: ChatRequest,
+    ) -> Result<impl TryStream<Ok = ChatResponse, Error = FetchStreamError>, FetchStreamError> {
+        let url = format!("{}/api/chat", self.base_url);
+
+        let request = self.client.post(&url).json(&request);
+
+        let stream = fetch_stream::<ChatResponse>(request).await?;
+
+        Ok(stream)
     }
 }
