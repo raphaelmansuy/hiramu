@@ -1,99 +1,97 @@
-use std::pin::Pin;
-use reqwest::Client;
-// disable warning for unused import for StreamExt
-// #[allow(unused_imports)]
-use futures_util::stream::{ Stream, StreamExt };
-use async_stream::stream;
-use crate::models::{ GenerateRequest, GenerateResponse };
-use crate::error::HiramuError;
-use crate::llm_client::LLMClient;
+use crate::ollama::models::{GenerateRequest, GenerateResponse, ChatRequest, ChatResponse};
+use futures::stream::{TryStreamExt};
+use reqwest::{Client, RequestBuilder};
+use serde::{de::DeserializeOwned};
+use thiserror::Error;
+use futures::stream::TryStream;
 
 pub struct OllamaClient {
     client: Client,
     base_url: String,
-    default_llm_model: String,
+}
+
+#[derive(Error, Debug)]
+pub enum FetchStreamError {
+    /// Request failed with the specified status code.
+    #[error("Request failed with status: {0}")]
+    RequestFailed(reqwest::StatusCode),
+    /// Failed to deserialize the received data.
+    #[error("Failed to deserialize data: {0}")]
+    DeserializationFailed(serde_json::Error),
+    /// An error occurred during the request.
+    #[error("Request error: {0}")]
+    RequestError(#[from] reqwest::Error),
+}
+
+/// Fetches a stream of data from the specified URL and deserializes it into chunks of type `T`.
+///
+/// # Arguments
+///
+/// * `url` - The URL to fetch the data from.
+/// * `config` - The configuration options for the request.
+///
+/// # Returns
+///
+/// A `Result` containing a `TryStream` of `Chunk<T>` if the request is successful,
+/// or a `FetchStreamError` if an error occurs.
+async fn fetch_stream<T>(request: RequestBuilder) -> Result<impl TryStream<Ok = T, Error = FetchStreamError>, FetchStreamError>
+where
+    T: DeserializeOwned,
+{ 
+    let response = request.send().await?;
+
+    let status = response.status();
+    let body = response.bytes_stream();
+
+    if status.is_success() {
+        Ok(body.map_err(FetchStreamError::RequestError).and_then(|chunk| {
+            async move {
+                let chunk = serde_json::from_slice(&chunk).map_err(FetchStreamError::DeserializationFailed)?;
+                Ok(chunk)
+            }
+        }))
+    } else {
+        Err(FetchStreamError::RequestFailed(status))
+    }
 }
 
 impl OllamaClient {
-    pub(crate) fn new(client: reqwest::Client, base_url: String, default_llm_model: String) -> Self {
+    /// Constructs a new `OllamaClient`.
+    pub fn new(base_url: String) -> Self {
         Self {
-            client,
+            client: Client::new(),
             base_url,
-            default_llm_model,
         }
     }
-}
 
-impl LLMClient for OllamaClient {
-    fn generate(
+    // the function signature will return either a stream of `GenerateResponse` encapsulated in a Result or a  `GenerateError`
+    pub async fn generate(
         &self,
-        request: GenerateRequest
-    ) -> Pin<Box<dyn Stream<Item = Result<GenerateResponse, HiramuError>> + Send>> {
+        request: GenerateRequest,
+    ) -> Result<impl TryStream<Ok = GenerateResponse, Error = FetchStreamError>, FetchStreamError> {
         let url = format!("{}/api/generate", self.base_url);
-        let client = self.client.clone();
-        Box::pin(
-            stream! {
-                let response = match client.post(&url).json(&request).send().await {
-                    Ok(res) => res,
-                    Err(e) => {
-                        yield Err(HiramuError::Http(e));
-                        return;
-                    }
-                };
 
-                let body = match response.error_for_status() {
-                    Ok(body) => body,
-                    Err(e) => {
-                        yield Err(HiramuError::Http(e));
-                        return;
-                    }
-                };
+        
+        let request = self.client
+            .post(&url)
+            .json(&request);
 
-                let mut stream = body.bytes_stream();
-                let mut buffer = Vec::new();
+        let stream = fetch_stream::<GenerateResponse>(request).await?;
 
-                while let Some(chunk) = stream.next().await {
-                    let chunk = match chunk {
-                        Ok(c) => c,
-                        Err(e) => {
-                            yield Err(HiramuError::Http(e));
-                            return;
-                        }
-                    };
-
-                    buffer.extend_from_slice(&chunk);
-
-                    // Process the buffer, splitting by newlines
-                    let mut offset = 0;
-                    while let Some(newline_idx) = buffer[offset..].iter().position(|&b| b == b'\n') {
-                        let newline_idx = offset + newline_idx;
-                        let line = &buffer[offset..newline_idx];
-                        offset = newline_idx + 1; // Skip past the newline character
-
-                        // Attempt to deserialize the JSON object
-                        if let Ok(text) = String::from_utf8(line.to_vec()) {
-                            match serde_json::from_str::<GenerateResponse>(&text) {
-                                Ok(response) => {
-                                    let done = response.done; // Store the done value before moving `response`
-                                    yield Ok(response); // `response` is moved here
-                                    if done {
-                                        return;
-                                    }
-                                }
-                                Err(e) => {
-                                    println!("JSON parsing error: {:?}", e);
-                                    // Continue processing other lines, even if one line fails to parse
-                                }
-                            }
-                        }
-                    }
-                    buffer.drain(..offset); // Remove processed lines from the buffer
-                }
-            }
-        )
+        return Ok(stream);
     }
 
-    fn get_default_llm_model(&self) -> String {
-        self.default_llm_model.clone()
+    // New chat method
+    pub async fn chat(
+        &self,
+        request: ChatRequest,
+    ) -> Result<impl TryStream<Ok = ChatResponse, Error = FetchStreamError>, FetchStreamError> {
+        let url = format!("{}/api/chat", self.base_url);
+
+        let request = self.client.post(&url).json(&request);
+
+        let stream = fetch_stream::<ChatResponse>(request).await?;
+
+        Ok(stream)
     }
 }
