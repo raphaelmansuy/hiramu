@@ -25,4 +25,5 @@ bytes = "1.5.0"
 base64 = "0.22.0"
 url = "2.5.0"
 pin-project = "1.1.5"
+tokio-stream = "0.1.15"
 

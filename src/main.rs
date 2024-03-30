@@ -35,8 +35,10 @@ async fn chat_response_loop() {
 
         let response_stream = client.chat(request).await.unwrap();
 
-        let response = print_and_get_chat_response(response_stream).await.unwrap();
-
+        let response = process_and_collect_chat_response(response_stream, |chunk| {
+            print!("{}", chunk);
+            io::stdout().flush().unwrap();
+        }).await.unwrap();
         // get last response from the chat
 
         messages.push(Message {
@@ -70,14 +72,17 @@ fn prompt_input(prompt: &str) -> Result<String, std::io::Error> {
     Ok(input.trim().to_string())
 }
 
-async fn print_and_get_chat_response(
+async fn process_and_collect_chat_response<F>(
     response: impl TryStream<Ok = ChatResponse, Error = FetchStreamError>,
-) -> Result<String, FetchStreamError> {
+    callback: F,
+) -> Result<String, FetchStreamError>
+where
+    F: Fn(&str) + Send + Sync + 'static,
+{
     let words = response
         .try_fold(String::new(), |mut f, chunk| async {
             let response = chunk.message.content;
-            print!("{}", response);
-            io::stdout().flush().unwrap();
+            callback(&response);
             f.push_str(&response);
             Ok(f)
         })
