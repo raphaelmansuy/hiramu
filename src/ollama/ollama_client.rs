@@ -1,13 +1,58 @@
-use crate::ollama::error::GenerateError;
 use crate::ollama::models::{GenerateRequest, GenerateResponse};
-use futures::StreamExt;
-use reqwest::Client;
-use std::error::Error;
-
+use futures::stream::{TryStreamExt};
+use reqwest::{Client, RequestBuilder};
+use serde::{de::DeserializeOwned};
+use thiserror::Error;
+use futures::stream::TryStream;
 
 pub struct OllamaClient {
     client: Client,
     base_url: String,
+}
+
+#[derive(Error, Debug)]
+pub enum FetchStreamError {
+    /// Request failed with the specified status code.
+    #[error("Request failed with status: {0}")]
+    RequestFailed(reqwest::StatusCode),
+    /// Failed to deserialize the received data.
+    #[error("Failed to deserialize data: {0}")]
+    DeserializationFailed(serde_json::Error),
+    /// An error occurred during the request.
+    #[error("Request error: {0}")]
+    RequestError(#[from] reqwest::Error),
+}
+
+/// Fetches a stream of data from the specified URL and deserializes it into chunks of type `T`.
+///
+/// # Arguments
+///
+/// * `url` - The URL to fetch the data from.
+/// * `config` - The configuration options for the request.
+///
+/// # Returns
+///
+/// A `Result` containing a `TryStream` of `Chunk<T>` if the request is successful,
+/// or a `FetchStreamError` if an error occurs.
+async fn fetch_stream<T>(request: RequestBuilder) -> Result<impl TryStream<Ok = T, Error = FetchStreamError>, FetchStreamError>
+where
+    T: DeserializeOwned,
+{ 
+    let response = request.send().await?;
+
+    let status = response.status();
+    let body = response.bytes_stream();
+
+    if status.is_success() {
+        Ok(body.map_err(FetchStreamError::RequestError).and_then(|chunk| {
+            async move {
+                let chunk = serde_json::from_slice(&chunk).map_err(FetchStreamError::DeserializationFailed)?;
+                Ok(chunk)
+            }
+        }))
+    } else {
+        Err(FetchStreamError::RequestFailed(status))
+    }
 }
 
 impl OllamaClient {
@@ -19,37 +64,20 @@ impl OllamaClient {
         }
     }
 
+    // the function signature will return either a stream of `GenerateResponse` encapsulated in a Result or a  `GenerateError`
     pub async fn generate(
         &self,
         request: GenerateRequest,
-    ) ->  Result<impl futures::Stream<Item = Result<GenerateResponse, GenerateError>>, Box<dyn Error>>{
+    ) -> Result<impl TryStream<Ok = GenerateResponse, Error = FetchStreamError>, FetchStreamError> {
         let url = format!("{}/api/generate", self.base_url);
-        let response = self
-            .client
+
+        
+        let request = self.client
             .post(&url)
-            .json(&request)
-            .send()
-            .await
-            .expect("Failed to send request");
-    
-            let stream = response
-            .bytes_stream()
-            .map(|chunk| {
-                chunk
-                    .map_err(|e| e.into())
-                    .and_then(|chunk| {
-                        let json_line = std::str::from_utf8(&chunk)?;
-                        if json_line.trim().is_empty() {
-                            Ok(None)
-                        } else {
-                            let generate_response = serde_json::from_str(json_line)?;
-                            Ok(Some(generate_response))
-                        }
-                    })
-            })
-            .filter_map(|item| async move { item.transpose() });
-    
-        Ok(stream)
+            .json(&request);
+
+        let stream = fetch_stream::<GenerateResponse>(request).await?;
+
+        return Ok(stream);
     }
 }
-

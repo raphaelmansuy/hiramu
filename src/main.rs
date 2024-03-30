@@ -1,8 +1,8 @@
-use futures_util::stream::StreamExt;
 use hiramu::ollama::models::GenerateRequestBuilder;
 use hiramu::ollama::ollama_client::OllamaClient;
 use std::io::{self, Write};
 use tokio;
+use futures_util::TryStreamExt;
 
 #[tokio::main]
 async fn main() {
@@ -14,29 +14,20 @@ async fn main() {
             .prompt(input)
             .build();
 
-        match client.generate(request).await {
-            Ok(response_stream) => {
-                let mut pinned_stream = Box::pin(response_stream);
-                while let Some(response_result) = pinned_stream.next().await {
-                    match response_result {
-                        Ok(response) => {
-                            print!("{}", response.response);
-                            io::stdout().flush().unwrap();
-                            if response.done {
-                                break;
-                            }
-                        }
-                        Err(e) => {
-                            eprintln!("Error: {:?}", e);
-                            break;
-                        }
-                    }
-                }
-            }
-            Err(e) => {
-                eprintln!("Error: {:?}", e);
-            }
-        }
+        let response = client.generate(request).await.unwrap();
+
+
+        response
+            .try_for_each(|chunk| async {
+                let response = chunk.response;
+                print!("{}", response);
+                // Flush the output to ensure the prompt is displayed.
+                io::stdout().flush().unwrap();
+                Ok(())
+            })
+            .await
+            .unwrap();        
+
     }
 }
 

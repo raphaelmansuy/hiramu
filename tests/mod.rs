@@ -1,8 +1,25 @@
-use std::io::{self, Write};
-use futures_util::StreamExt;
+use futures_util::stream::TryStream; 
+use futures_util::stream::TryStreamExt;
 use hiramu::ollama::models::GenerateRequestBuilder;
+use hiramu::ollama::models::GenerateResponse; 
+use hiramu::ollama::ollama_client::FetchStreamError;
 use hiramu::ollama::ollama_client::OllamaClient;
 use hiramu::util::fetch_and_base64_encode_image;
+use std::io::{self, Write}; 
+
+async fn display_response(
+    response_stream: impl TryStream<Ok = GenerateResponse, Error = FetchStreamError>,
+) {
+    response_stream
+        .try_for_each(|response| async {
+            let response = response.response;
+            print!("{}", response);
+            io::stdout().flush().unwrap();
+            Ok(())
+        })
+        .await
+        .unwrap();
+}
 
 #[tokio::test]
 async fn test_generate() {
@@ -13,25 +30,10 @@ async fn test_generate() {
         .prompt("You are talking like a pirate: Explain why France is a great country in less than 40 words.".to_string())
         .build();
 
-    let mut response_stream = client.generate(request).await;
+    let response_stream = client.generate(request).await.unwrap();
     println!("✅ Request sent to the pirate model. 😂");
 
-    while let Some(response_result) = response_stream.next().await {
-        match response_result {
-            Ok(response) => {
-                print!("{}", response.response);
-                io::stdout().flush().unwrap();
-
-                if response.done {
-                    break;
-                }
-            }
-            Err(e) => {
-                eprintln!("Error: {:?}", e);
-                break;
-            }
-        }
-    }
+    display_response(response_stream).await;
 }
 
 #[tokio::test]
@@ -46,25 +48,10 @@ async fn test_generate_with_image() {
         .images(vec![image])
         .build();
 
-    let mut response_stream = client.generate(request).await;
+    let response_stream = client.generate(request).await.unwrap();
     println!("✅ Request sent to the llava model. 🌋");
 
-    while let Some(response_result) = response_stream.next().await {
-        match response_result {
-            Ok(response) => {
-                print!("{}", response.response);
-                io::stdout().flush().unwrap();
-
-                if response.done {
-                    break;
-                }
-            }
-            Err(e) => {
-                eprintln!("Error: {:?}", e);
-                break;
-            }
-        }
-    }
+    display_response(response_stream).await;
 }
 
 #[tokio::test]
@@ -83,23 +70,8 @@ async fn test_generate_with_options() {
         .options(options)
         .build();
 
-    let mut response_stream = client.generate(request).await;
+    let response_stream = client.generate(request).await.unwrap();
     println!("✅ Request sent to the mistral model with custom options.");
 
-    while let Some(response_result) = response_stream.next().await {
-        match response_result {
-            Ok(response) => {
-                print!("{}", response.response);
-                io::stdout().flush().unwrap();
-
-                if response.done {
-                    break;
-                }
-            }
-            Err(e) => {
-                eprintln!("Error: {:?}", e);
-                break;
-            }
-        }
-    }
+    display_response(response_stream).await;
 }
