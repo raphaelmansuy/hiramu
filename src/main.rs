@@ -1,5 +1,6 @@
 use std::io::{self, Write};
 
+use aws_config::profile;
 use futures::stream::TryStream; 
 use futures_util::TryStreamExt;
 use tokio;
@@ -17,7 +18,30 @@ use hiramu::bedrock::bedrock_client::BedrockClient;
 #[tokio::main]
 async fn main() {
 
-    BedrockClient::generate().await.unwrap();
+      // Define the model ID and input prompt
+      let model_id = "anthropic.claude-3-haiku-20240307-v1:0";
+      let profile_name = "bedrock";
+      let region = "us-west-2";
+
+      let prompt = "Hi. In a short paragraph, explain what you can do.";
+
+      // Prepare the payload for the model
+      let payload = serde_json::json!({
+          "anthropic_version": "bedrock-2023-05-31",
+          "max_tokens": 1000,
+          "messages": [{
+              "role": "user",
+              "content": [{
+                  "type": "text",
+                  "text": prompt
+              }]
+          }]
+      });
+
+    let result = BedrockClient::generate_raw(model_id.to_string(), profile_name.to_string(), region.to_string(), payload).await.unwrap();
+
+    println!("{:?}", result);
+
 
     // generate_response_loop().await;
     chat_response_loop().await;

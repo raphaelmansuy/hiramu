@@ -4,6 +4,8 @@ use std::{borrow::Cow, io::Write};
 use serde_json::Value;
 use std::env;
 
+
+
 pub struct BedrockClient {}
 
 impl BedrockClient {
@@ -11,6 +13,39 @@ impl BedrockClient {
     pub fn new() -> Self {
         Self {}
     }
+
+    pub async fn generate_raw(model_id: String,  profile_name: String, region: String, payload: Value) -> Result<Value,Error> {
+           // Set AWS_PROFILE environment variable
+           env::set_var("AWS_PROFILE", profile_name);
+
+           // Set AWS_REGION environment variable
+           env::set_var("AWS_REGION", region);
+   
+           let region_provider = RegionProviderChain::default_provider().or_else("us-west-2");
+           let shared_config = aws_config::from_env().region(region_provider).load().await;
+   
+           // Create a new Bedrock Runtime client
+           let client = Client::new(&shared_config);
+      
+           let payload_bytes = serde_json::to_vec(&payload).unwrap();   
+           let payload_blob = aws_smithy_types::Blob::new(payload_bytes);
+   
+           // Invoke the model with the payload
+           let resp = client
+               .invoke_model()
+               .model_id(model_id)
+               .content_type("application/json")
+               .body(payload_blob)
+               .send()
+               .await?;
+   
+           // Print the model's response
+           let response: serde_json::Value = serde_json::from_slice(resp.body().as_ref()).unwrap();
+           Ok(response)
+   
+    }
+
+
 
     pub async fn generate() -> Result<(), Error> {
         // set environment variables AWS_PROFILE and AWS_REGION
