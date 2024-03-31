@@ -1,7 +1,6 @@
 use std::io::{self, Write};
 
-
-use futures::stream::TryStream; 
+use futures::stream::TryStream;
 use futures_util::TryStreamExt;
 use tokio;
 
@@ -12,36 +11,87 @@ use hiramu::ollama::models::Message;
 use hiramu::ollama::ollama_client::FetchStreamError;
 use hiramu::ollama::ollama_client::OllamaClient;
 
-use hiramu::GenerateResponse;
 use hiramu::bedrock::bedrock_client::BedrockClient;
+use hiramu::GenerateResponse;
+
+async fn demo_generate_raw() {
+    let model_id = "anthropic.claude-3-haiku-20240307-v1:0";
+    let profile_name = "bedrock";
+    let region = "us-west-2";
+
+    let prompt = "Hi. In a short paragraph, explain what you can do.";
+
+    let payload = serde_json::json!({
+        "anthropic_version": "bedrock-2023-05-31",
+        "max_tokens": 1000,
+        "messages": [{
+            "role": "user",
+            "content": [{
+                "type": "text",
+                "text": prompt
+            }]
+        }]
+    });
+
+    let result = BedrockClient::generate_raw(
+        model_id.to_string(),
+        profile_name.to_string(),
+        region.to_string(),
+        payload,
+    )
+    .await
+    .unwrap();
+
+    println!("{:?}", result);
+}
+
+async fn demo_generate_raw_stream() {
+    let model_id = "anthropic.claude-3-haiku-20240307-v1:0";
+    let profile_name = "bedrock";
+    let region = "us-west-2";
+
+    let prompt = "Hi. In a short paragraph, explain what you can do.";
+
+    let payload = serde_json::json!({
+        "anthropic_version": "bedrock-2023-05-31",
+        "max_tokens": 1000,
+        "messages": [{
+            "role": "user",
+            "content": [{
+                "type": "text",
+                "text": prompt
+            }]
+        }]
+    });
+
+    let stream = BedrockClient::generate_raw_stream(
+        model_id.to_string(),
+        profile_name.to_string(),
+        region.to_string(),
+        payload,
+    )
+    .await;
+
+    // consumme the stream and print the response
+    stream
+        .try_for_each(|chunk|  async move {
+            print!("{:?}", chunk);
+            // Flush the output to ensure the prompt is displayed.
+            io::stdout().flush().unwrap();
+            Ok(())
+        })
+        .await
+        .unwrap();
+
+
+}
+
 
 #[tokio::main]
 async fn main() {
+    //demo_generate_raw().await;
 
-      // Define the model ID and input prompt
-      let model_id = "anthropic.claude-3-haiku-20240307-v1:0";
-      let profile_name = "bedrock";
-      let region = "us-west-2";
-
-      let prompt = "Hi. In a short paragraph, explain what you can do.";
-
-      // Prepare the payload for the model
-      let payload = serde_json::json!({
-          "anthropic_version": "bedrock-2023-05-31",
-          "max_tokens": 1000,
-          "messages": [{
-              "role": "user",
-              "content": [{
-                  "type": "text",
-                  "text": prompt
-              }]
-          }]
-      });
-
-    let result = BedrockClient::generate_raw(model_id.to_string(), profile_name.to_string(), region.to_string(), payload).await.unwrap();
-
-    println!("{:?}", result);
-
+    demo_generate_raw_stream().await;
 
     // generate_response_loop().await;
     chat_response_loop().await;
@@ -69,7 +119,9 @@ async fn chat_response_loop() {
         let response = process_and_collect_chat_response(response_stream, |chunk| {
             print!("{}", chunk);
             io::stdout().flush().unwrap();
-        }).await.unwrap();
+        })
+        .await
+        .unwrap();
         // get last response from the chat
 
         messages.push(Message {
