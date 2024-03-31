@@ -1,6 +1,6 @@
 use std::io::{self, Write};
 
-use aws_config::profile;
+
 use futures::stream::TryStream; 
 use futures_util::TryStreamExt;
 use tokio;
