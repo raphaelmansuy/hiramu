@@ -83,27 +83,6 @@ impl BedrockClient {
 
         let payload_blob = aws_smithy_types::Blob::new(payload_bytes);
 
-        // Invoke the model with the payload
-        let resp = client
-            .invoke_model()
-            .model_id(model_id)
-            .content_type("application/json")
-            .body(payload_blob)
-            .send()
-            .await?;
-
-        // Print the model's response
-        let response: serde_json::Value = serde_json::from_slice(resp.body().as_ref()).unwrap();
-
-        println!("{}", response);
-
-        println!(
-            "Response from Anthropic Claude:\n{}",
-            response["content"][0]["text"].as_str().unwrap()
-        );
-
-        let payload_bytes = serde_json::to_vec(&payload).unwrap();
-        let payload_blob = aws_smithy_types::Blob::new(payload_bytes);
 
         let output_stream = client
             .invoke_model_with_response_stream()
