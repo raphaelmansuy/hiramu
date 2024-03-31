@@ -1,8 +1,7 @@
-use aws_config::meta::region::RegionProviderChain;
+use aws_config::Region;
 use aws_sdk_bedrockruntime::{Client, Error};
 use futures::stream::Stream;
 use serde_json::Value;
-use std::env;
 use std::borrow::Cow;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
@@ -14,27 +13,35 @@ impl BedrockClient {
         Self {}
     }
 
+    async fn create_client(profile_name: Option<&str>, region: Option<&str>) -> Client {
+        let profile = profile_name.unwrap_or("default");
+        let region_name = region.unwrap_or("us-west-2");
+        let region = Region::new(region_name.to_string());
+
+        // Create a new config loader
+        let config = aws_config::from_env()
+            .profile_name(profile)
+            .region(region)
+            .load()
+            .await;
+
+        // Create a shared config
+        Client::new(&config)
+    }
+
     pub async fn generate_raw_stream(
         model_id: String,
-        profile_name: String,
-        region: String,
         payload: Value,
+        profile_name: Option<String>,
+        region: Option<String>,
     ) -> impl Stream<Item = Result<Value, Error>> {
-        // Set AWS_PROFILE environment variable
-        env::set_var("AWS_PROFILE", profile_name);
-    
-        // Set AWS_REGION environment variable
-        env::set_var("AWS_REGION", region);
-    
-        let region_provider = RegionProviderChain::default_provider().or_else("us-west-2");
-        let shared_config = aws_config::from_env().region(region_provider).load().await;
-    
-        let client = Client::new(&shared_config);
+        let client = Self::create_client(profile_name.as_deref(), region.as_deref()).await;
+
         let payload_bytes = serde_json::to_vec(&payload).unwrap();
         let payload_blob = aws_smithy_types::Blob::new(payload_bytes);
-    
+
         let (sender, receiver) = tokio::sync::mpsc::unbounded_channel();
-    
+
         tokio::spawn(async move {
             let resp = client
                 .invoke_model_with_response_stream()
@@ -43,7 +50,7 @@ impl BedrockClient {
                 .body(payload_blob)
                 .send()
                 .await;
-    
+
             match resp {
                 Ok(output) => {
                     let mut response_stream = output.body;
@@ -54,7 +61,8 @@ impl BedrockClient {
                                 payload_part,
                             ))) => {
                                 if let Some(blob) = &payload_part.bytes {
-                                    let data: Cow<'_, str> = String::from_utf8_lossy(&blob.as_ref());
+                                    let data: Cow<'_, str> =
+                                        String::from_utf8_lossy(&blob.as_ref());
                                     let value: Value = serde_json::from_str(&data).unwrap();
                                     sender.send(Ok(value)).unwrap();
                                 }
@@ -66,8 +74,7 @@ impl BedrockClient {
                             Ok(None) => {
                                 break;
                             }
-                            Ok(Some(_)) => {
-                            }
+                            Ok(Some(_)) => {}
                         }
                     }
                 }
@@ -76,28 +83,17 @@ impl BedrockClient {
                 }
             }
         });
-    
+
         UnboundedReceiverStream::new(receiver)
     }
 
-
     pub async fn generate_raw(
         model_id: String,
-        profile_name: String,
-        region: String,
         payload: Value,
+        profile_name: Option<String>,
+        region: Option<String>,
     ) -> Result<Value, Error> {
-        // Set AWS_PROFILE environment variable
-        env::set_var("AWS_PROFILE", profile_name);
-
-        // Set AWS_REGION environment variable
-        env::set_var("AWS_REGION", region);
-
-        let region_provider = RegionProviderChain::default_provider().or_else("us-west-2");
-        let shared_config = aws_config::from_env().region(region_provider).load().await;
-
-        // Create a new Bedrock Runtime client
-        let client = Client::new(&shared_config);
+        let client = Self::create_client(profile_name.as_deref(), region.as_deref()).await;
 
         let payload_bytes = serde_json::to_vec(&payload).unwrap();
         let payload_blob = aws_smithy_types::Blob::new(payload_bytes);
@@ -115,6 +111,4 @@ impl BedrockClient {
         let response: serde_json::Value = serde_json::from_slice(resp.body().as_ref()).unwrap();
         Ok(response)
     }
-
-
 }

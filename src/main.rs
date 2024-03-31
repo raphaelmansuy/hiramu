@@ -35,9 +35,9 @@ async fn demo_generate_raw() {
 
     let result = BedrockClient::generate_raw(
         model_id.to_string(),
-        profile_name.to_string(),
-        region.to_string(),
         payload,
+        Some(profile_name.to_string()),
+        Some(region.to_string()),
     )
     .await
     .unwrap();
@@ -66,9 +66,9 @@ async fn demo_generate_raw_stream() {
 
     let stream = BedrockClient::generate_raw_stream(
         model_id.to_string(),
-        profile_name.to_string(),
-        region.to_string(),
         payload,
+        Some(profile_name.to_string()),
+        Some(region.to_string()),
     )
     .await;
 
