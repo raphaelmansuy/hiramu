@@ -1,10 +1,12 @@
+use futures::TryStreamExt;
+
 use crate::bedrock::model_info::{ModelInfo, ModelName};
 use crate::bedrock::models::claude::claude_client::ClaudeClient;
 use crate::bedrock::models::claude::claude_request_message::ChatOptions;
 use crate::bedrock::models::claude::claude_request_message::ConversationRequest;
 use crate::bedrock::models::claude::claude_request_message::Message;
 
-pub async fn demo_chat_claude() {
+pub async fn demo_chat_claude_with_stream() {
     let client = ClaudeClient::new("bedrock".to_string(), "us-west-2".to_string());
 
     let mut conversation_request = ConversationRequest::default();
@@ -20,8 +22,8 @@ pub async fn demo_chat_claude() {
         serde_json::to_string_pretty(&conversation_request).unwrap()
     );
 
-    let response = client
-        .chat(
+    let response_stream = client
+        .chat_with_stream(
             &conversation_request,
             ChatOptions {
                 model_id: ModelInfo::from_model_name(ModelName::AnthropicClaudeHaiku1x),
@@ -34,15 +36,16 @@ pub async fn demo_chat_claude() {
         )
         .await;
 
-    match response {
-        Ok(response) => {
-            let json_display = serde_json::to_string_pretty(&response).unwrap();
+    // consumme the stream and print the response
+    response_stream
+        .try_for_each(|chunk| async move {
+            let json_display = serde_json::to_string_pretty(&chunk).unwrap();
             println!("{:?}", json_display);
-        }
-        Err(e) => {
-            println!("Error: {:?}", e);
-        }
-    }
+            Ok(())
+        })
+        .await
+        .unwrap();
+
 }
 
 // Test
@@ -51,7 +54,7 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_demo_chat_claude() {
-        demo_chat_claude().await;
+    async fn test_demo_chat_claude_with_stream() {
+        demo_chat_claude_with_stream().await;
     }
 }

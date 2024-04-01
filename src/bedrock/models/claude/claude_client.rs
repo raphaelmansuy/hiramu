@@ -5,6 +5,8 @@ use crate::bedrock::models::claude::claude_error::ClaudeError;
 use crate::bedrock::models::claude::claude_request_message::{
     ChatOptions, ConversationRequest, ConversationResponse,
 };
+use futures::stream::Stream;
+use aws_sdk_bedrockruntime::Error;
 
 pub struct ClaudeClient {
     bedrock_client: BedrockClient,
@@ -46,5 +48,26 @@ impl ClaudeClient {
             }
             Err(err) => Err(ClaudeError::Unknown(err.to_string())),
         }
+    }
+
+    pub async fn chat_with_stream(
+        &self,
+        request: &ConversationRequest,
+        options: ChatOptions,
+    ) -> impl Stream<Item = Result<Value, Error>> {
+        let model_id = options.model_id.to_string();
+        let payload: Value = serde_json::to_value(request).unwrap();
+        let response = self
+            .bedrock_client
+            .generate_raw_stream(
+                model_id,
+                payload,
+                Some(self.profile_name.clone()),
+                Some(self.region.clone()),
+            )
+            .await;
+
+
+        response
     }
 }
