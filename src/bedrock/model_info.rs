@@ -116,4 +116,9 @@ impl ModelInfo {
             text: "stability.stable-diffusion-xl-v1",
         },
     ];
+
+    pub fn from_model_name(name: ModelName) -> String  {
+        ModelInfo::MODELS.iter().find(|model| model.name == name).unwrap().text.to_string()
+    }
+
 }

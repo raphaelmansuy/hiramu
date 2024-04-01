@@ -22,6 +22,45 @@ impl Default for ChatOptions {
     }
 }
 
+impl ChatOptions {
+    pub fn with_model_id(mut self, model_id: String) -> Self {
+        self.model_id = model_id;
+        self
+    }
+
+    pub fn with_temperature(mut self, temperature: f32) -> Self {
+        self.temperature = Some(temperature);
+        self
+    }
+
+    pub fn with_top_p(mut self, top_p: f32) -> Self {
+        self.top_p = Some(top_p);
+        self
+    }
+
+    pub fn with_top_k(mut self, top_k: u32) -> Self {
+        self.top_k = Some(top_k);
+        self
+    }
+
+    pub fn with_max_tokens(mut self, max_tokens: u32) -> Self {
+        self.max_tokens = max_tokens;
+        self
+    }
+
+    pub fn with_stop_sequences(mut self, stop_sequences: Vec<String>) -> Self {
+        self.stop_sequences = Some(stop_sequences);
+        self
+    }
+
+    pub fn add_stop_sequence(mut self, stop_sequence: String) -> Self {
+        match &mut self.stop_sequences {
+            Some(sequences) => sequences.push(stop_sequence),
+            None => self.stop_sequences = Some(vec![stop_sequence]),
+        }
+        self
+    }
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Role {

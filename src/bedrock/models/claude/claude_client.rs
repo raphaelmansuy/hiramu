@@ -2,22 +2,9 @@ use serde_json::Value;
 
 use crate::bedrock::bedrock_client::BedrockClient;
 use crate::bedrock::models::claude::claude_error::ClaudeError;
-use crate::bedrock::models::claude::claude_request::ClaudeRequest;
 use crate::bedrock::models::claude::claude_request_message::{
     ChatOptions, ConversationRequest, ConversationResponse,
 };
-use crate::bedrock::models::claude::claude_response::ClaudeResponse;
-
-pub struct CompletionOptions {
-    pub model_id: String,
-    pub temperature: Option<f32>,
-    pub top_p: Option<f32>,
-    pub top_k: Option<usize>,
-    pub max_tokens: usize,
-    pub stop_sequences: Option<Vec<String>>,
-}
-
-// Add the missing import statement for ResponseMessage
 
 pub struct ClaudeClient {
     bedrock_client: BedrockClient,
@@ -32,46 +19,6 @@ impl ClaudeClient {
             bedrock_client,
             region,
             profile_name,
-        }
-    }
-
-    pub async fn complete(
-        &self,
-        prompt: &str,
-        options: CompletionOptions,
-    ) -> Result<ClaudeResponse, ClaudeError> {
-        let request = ClaudeRequest::new(prompt)
-            .with_temperature(options.temperature.unwrap_or(0.0))
-            .with_top_p(options.top_p.unwrap_or(0.0))
-            .with_top_k(options.top_k.unwrap_or(0))
-            .with_max_tokens(options.max_tokens)
-            .with_stop_sequences(
-                options
-                    .stop_sequences
-                    .unwrap_or_default()
-                    .iter()
-                    .map(|s| s.as_str())
-                    .collect(),
-            );
-
-        let model_id = options.model_id.to_string();
-        let payload: Value = serde_json::to_value(request).unwrap();
-        let response = self
-            .bedrock_client
-            .generate_raw(
-                model_id,
-                payload,
-                Some(self.profile_name.to_owned()),
-                Some(self.region.to_owned()),
-            )
-            .await;
-
-        match response {
-            Ok(response) => {
-                let completion = serde_json::from_value(response).unwrap();
-                Ok(completion)
-            }
-            Err(err) => Err(ClaudeError::Unknown(err.to_string())),
         }
     }
 

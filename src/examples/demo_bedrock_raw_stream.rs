@@ -1,10 +1,12 @@
-use crate::bedrock::bedrock_client::BedrockClient;
 use futures::TryStreamExt;
 use std::io;
 use std::io::Write;
 
+use crate::bedrock::bedrock_client::BedrockClient;
+use crate::bedrock::model_info::{ModelInfo, ModelName};
+
 pub async fn demo_generate_raw_stream() {
-    let model_id = "anthropic.claude-3-haiku-20240307-v1:0";
+    let model_id = ModelInfo::from_model_name(ModelName::AnthropicClaudeHaiku1x);
     let profile_name = "bedrock";
     let region = "us-west-2";
 
@@ -44,7 +46,6 @@ pub async fn demo_generate_raw_stream() {
         .await
         .unwrap();
 }
-
 
 // Write a test
 
