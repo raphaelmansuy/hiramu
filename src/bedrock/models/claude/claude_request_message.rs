@@ -22,7 +22,7 @@ pub struct RequestMessage {
 }
 
 /// Represents a message in the conversation.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug,Clone)]
 pub struct Message {
     /// The role of the message sender. Valid values: "user" or "assistant".
     pub role: String,
@@ -31,7 +31,7 @@ pub struct Message {
 }
 
 /// Represents the content of a message, which can be either text or blocks.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug,Clone)]
 #[serde(untagged)]
 pub enum Content {
     /// Text content.
@@ -41,7 +41,7 @@ pub enum Content {
 }
 
 /// Represents a content block within a message.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug,Clone)]
 pub struct ContentBlock {
     /// The type of the content block. Valid values: "text" or "image".
     #[serde(rename = "type")]
@@ -52,7 +52,7 @@ pub struct ContentBlock {
 }
 
 /// Represents the data associated with a content block.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug,Clone)]
 #[serde(untagged)]
 pub enum ContentBlockData {
     /// Text data.
@@ -62,7 +62,7 @@ pub enum ContentBlockData {
 }
 
 /// Represents the source of an image.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug,Clone)]
 pub struct ImageSource {
     /// The encoding type for the image. Must be "base64".
     #[serde(rename = "type")]
