@@ -3,8 +3,10 @@ use serde_json::Value;
 use crate::bedrock::bedrock_client::BedrockClient;
 use crate::bedrock::models::claude::claude_error::ClaudeError;
 use crate::bedrock::models::claude::claude_request::ClaudeRequest;
+use crate::bedrock::models::claude::claude_request_message::{
+    ChatOptions, ConversationRequest, ConversationResponse,
+};
 use crate::bedrock::models::claude::claude_response::ClaudeResponse;
-use crate::bedrock::models::claude::claude_request_message::{ConversationRequest,ConversationResponse};
 
 pub struct CompletionOptions {
     pub model_id: String,
@@ -12,15 +14,6 @@ pub struct CompletionOptions {
     pub top_p: Option<f32>,
     pub top_k: Option<usize>,
     pub max_tokens: usize,
-    pub stop_sequences: Option<Vec<String>>,
-}
-
-pub struct ChatOptions {
-    pub model_id: String,
-    pub temperature: Option<f32>,
-    pub top_p: Option<f32>,
-    pub top_k: Option<u32>,
-    pub max_tokens: u32,
     pub stop_sequences: Option<Vec<String>>,
 }
 
@@ -68,8 +61,8 @@ impl ClaudeClient {
             .generate_raw(
                 model_id,
                 payload,
-                Some(self.profile_name.clone()),
-                Some(self.region.clone()),
+                Some(self.profile_name.to_owned()),
+                Some(self.region.to_owned()),
             )
             .await;
 
@@ -87,28 +80,24 @@ impl ClaudeClient {
         request: &ConversationRequest,
         options: ChatOptions,
     ) -> Result<ConversationResponse, ClaudeError> {
-
-
         let model_id = options.model_id.to_string();
         let payload: Value = serde_json::to_value(request).unwrap();
-            let response = self
-                .bedrock_client
-                .generate_raw(
-                    model_id,
-                    payload,
-                    Some(self.profile_name.clone()),
-                    Some(self.region.clone()),
-                )
-                .await;
+        let response = self
+            .bedrock_client
+            .generate_raw(
+                model_id,
+                payload,
+                Some(self.profile_name.clone()),
+                Some(self.region.clone()),
+            )
+            .await;
         match response {
             Ok(response) => {
                 //display the response, JSON formatted
-                println!("{}", serde_json::to_string_pretty(&response).unwrap());
-                let chat_response = serde_json::from_value(response).unwrap();
-                Ok(chat_response)
+                let conversaton_response = serde_json::from_value(response).unwrap();
+                Ok(conversaton_response)
             }
             Err(err) => Err(ClaudeError::Unknown(err.to_string())),
         }
-    
-        }
+    }
 }

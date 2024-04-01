@@ -1,24 +1,21 @@
-use crate::bedrock::models::claude::claude_client::ChatOptions;
 use crate::bedrock::models::claude::claude_client::ClaudeClient;
+use crate::bedrock::models::claude::claude_request_message::ChatOptions;
 use crate::bedrock::models::claude::claude_request_message::ConversationRequest;
 use crate::bedrock::models::claude::claude_request_message::Message;
 
 pub async fn demo_chat_claude() {
     let client = ClaudeClient::new("bedrock".to_string(), "us-west-2".to_string());
 
-    let conversation_request = ConversationRequest {
-        max_tokens: Some(100),
-        anthropic_version: "bedrock-2023-05-31".to_string(),
-        system: Some("Your are a useful assistant.".to_string()),
-        messages: vec![
-            Message::new_user_message("Hello, how are you?".to_owned()),
-            Message::new_assistant_message("I'm doing well, thank you!".to_owned()),
-            Message::new_user_message("That's great to hear!".to_owned()),
-        ],
-    };
+    let mut conversation_request = ConversationRequest::default();
 
-    // print the request in JSON, beautifully displayed
-    println!("{}", serde_json::to_string_pretty(&conversation_request).unwrap());
+    conversation_request.messages.push(Message::new_user_message(
+        "What is the capital of France ?".to_owned(),
+    ));
+
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&conversation_request).unwrap()
+    );
 
     let response = client
         .chat(
@@ -36,13 +33,14 @@ pub async fn demo_chat_claude() {
 
     match response {
         Ok(response) => {
-            println!("{:?}", response);
+
+            let json_display = serde_json::to_string_pretty(&response).unwrap();
+            println!("{:?}", json_display);
         }
         Err(e) => {
             println!("Error: {:?}", e);
         }
     }
-
 }
 
 // Test
