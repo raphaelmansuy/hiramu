@@ -1,4 +1,5 @@
 use aws_config::Region;
+use aws_sdk_bedrock::config::BehaviorVersion;
 use aws_sdk_bedrockruntime::{Client, Error};
 use futures::stream::Stream;
 use serde_json::Value;
@@ -19,7 +20,7 @@ impl BedrockClient {
         let region = Region::new(region_name.to_string());
 
         // Create a new config loader
-        let config = aws_config::from_env()
+        let config = aws_config::defaults(BehaviorVersion::v2023_11_09())
             .profile_name(profile)
             .region(region)
             .load()
