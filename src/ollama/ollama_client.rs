@@ -1,7 +1,7 @@
 use crate::ollama::models::{GenerateRequest, GenerateResponse, ChatRequest, ChatResponse};
-use futures::stream::{TryStreamExt};
+use futures::stream::TryStreamExt;
 use reqwest::{Client, RequestBuilder};
-use serde::{de::DeserializeOwned};
+use serde::de::DeserializeOwned;
 use thiserror::Error;
 use futures::stream::TryStream;
 
