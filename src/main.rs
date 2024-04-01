@@ -1,4 +1,4 @@
-use hiramu::demo::demo_ollama::chat_response_loop;
+use hiramu::examples::demo_ollama::chat_response_loop;
 
 
 

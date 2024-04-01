@@ -3,7 +3,7 @@ pub mod ollama;
 pub mod util;
 pub mod bedrock;
 
-pub mod demo;
+pub mod examples;
 
 pub use error::HiramuError;
 pub use ollama::ollama_client::OllamaClient;
