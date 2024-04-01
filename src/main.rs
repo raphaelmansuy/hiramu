@@ -14,6 +14,9 @@ use hiramu::ollama::ollama_client::OllamaClient;
 use hiramu::bedrock::bedrock_client::BedrockClient;
 use hiramu::GenerateResponse;
 
+use hiramu::bedrock::models::claude::claude_client::ClaudeClient;
+use hiramu::bedrock::models::claude::claude_client::CompletionOptions;
+
 async fn demo_generate_raw() {
     let model_id = "anthropic.claude-3-haiku-20240307-v1:0";
     let profile_name = "bedrock";
@@ -33,14 +36,17 @@ async fn demo_generate_raw() {
         }]
     });
 
-    let result = BedrockClient::generate_raw(
-        model_id.to_string(),
-        payload,
-        Some(profile_name.to_string()),
-        Some(region.to_string()),
-    )
-    .await
-    .unwrap();
+    let client = BedrockClient::new();
+
+    let result = client
+        .generate_raw(
+            model_id.to_string(),
+            payload,
+            Some(profile_name.to_string()),
+            Some(region.to_string()),
+        )
+        .await
+        .unwrap();
 
     println!("{:?}", result);
 }
@@ -64,37 +70,57 @@ async fn demo_generate_raw_stream() {
         }]
     });
 
-    let stream = BedrockClient::generate_raw_stream(
-        model_id.to_string(),
-        payload,
-        Some(profile_name.to_string()),
-        Some(region.to_string()),
-    )
-    .await;
+    let client = BedrockClient::new();
+
+    let stream = client
+        .generate_raw_stream(
+            model_id.to_string(),
+            payload,
+            Some(profile_name.to_string()),
+            Some(region.to_string()),
+        )
+        .await;
 
     // consumme the stream and print the response
     stream
-        .try_for_each(|chunk|  async move {
-            print!("{:?}", chunk);
+        .try_for_each(|chunk| async move {
+            println!("{:?}", chunk);
             // Flush the output to ensure the prompt is displayed.
             io::stdout().flush().unwrap();
             Ok(())
         })
         .await
         .unwrap();
-
-
 }
 
+async fn demo_completion_claude() {
+    let client = ClaudeClient::new("bedrock".to_string(), "us-west-2".to_string());
+
+    let response = client
+        .complete(
+            "\n\nHuman:\nHi. In a short paragraph, explain what you can do.\n\nAssistant:",
+            CompletionOptions {
+                temperature: Some(0.5),
+                top_p: Some(1.0),
+                top_k: Some(50),
+                max_tokens: 100,
+                model_id: "anthropic.claude-3-haiku-20240307-v1:0".to_string(),
+                stop_sequences: Some(vec!["\n\nHuman:".to_string()]),
+            },
+        )
+        .await
+        .unwrap();
+
+    println!("{:?}", response);
+}
 
 #[tokio::main]
 async fn main() {
+    demo_completion_claude().await;
     //demo_generate_raw().await;
-
-    demo_generate_raw_stream().await;
-
+    //demo_generate_raw_stream().await;
     // generate_response_loop().await;
-    chat_response_loop().await;
+    //chat_response_loop().await;
 }
 
 async fn chat_response_loop() {

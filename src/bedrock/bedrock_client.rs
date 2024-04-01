@@ -30,6 +30,7 @@ impl BedrockClient {
     }
 
     pub async fn generate_raw_stream(
+        &self,
         model_id: String,
         payload: Value,
         profile_name: Option<String>,
@@ -88,6 +89,7 @@ impl BedrockClient {
     }
 
     pub async fn generate_raw(
+        &self,
         model_id: String,
         payload: Value,
         profile_name: Option<String>,
