@@ -110,7 +110,6 @@ impl BedrockClient {
             .send()
             .await?;
 
-        // Print the model's response
         let response: serde_json::Value = serde_json::from_slice(resp.body().as_ref()).unwrap();
         Ok(response)
     }
