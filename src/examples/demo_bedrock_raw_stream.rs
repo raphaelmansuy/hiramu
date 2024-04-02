@@ -2,7 +2,7 @@ use futures::TryStreamExt;
 use std::io;
 use std::io::Write;
 
-use crate::bedrock::bedrock_client::BedrockClient;
+use crate::bedrock::bedrock_client::{BedrockClient, BedrockClientOptions};
 use crate::bedrock::model_info::{ModelInfo, ModelName};
 
 pub async fn demo_generate_raw_stream() {
@@ -24,14 +24,17 @@ pub async fn demo_generate_raw_stream() {
         }]
     });
 
-    let client = BedrockClient::new();
+    let options = BedrockClientOptions::new()
+        .profile_name(profile_name)
+        .region(region);
+    
+
+    let client = BedrockClient::new(options).await;
 
     let stream = client
         .generate_raw_stream(
             model_id.to_string(),
             payload,
-            Some(profile_name.to_string()),
-            Some(region.to_string()),
         )
         .await;
 

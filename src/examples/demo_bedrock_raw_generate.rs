@@ -1,4 +1,4 @@
-use crate::bedrock::bedrock_client::BedrockClient;
+use crate::bedrock::bedrock_client::{BedrockClient, BedrockClientOptions};
 use crate::bedrock::model_info::{ModelInfo, ModelName};
 
 pub async fn demo_generate_raw() {
@@ -20,14 +20,17 @@ pub async fn demo_generate_raw() {
         }]
     });
 
-    let client = BedrockClient::new();
+    let options = BedrockClientOptions::new()
+        .profile_name(profile_name)
+        .region(region);
+    
+
+    let client = BedrockClient::new(options).await;
 
     let result = client
         .generate_raw(
             model_id.to_string(),
             payload,
-            Some(profile_name.to_string()),
-            Some(region.to_string()),
         )
         .await
         .unwrap();

@@ -1,11 +1,15 @@
 use crate::bedrock::model_info::{ModelInfo, ModelName};
-use crate::bedrock::models::claude::claude_client::ClaudeClient;
+use crate::bedrock::models::claude::claude_client::{ClaudeClient, ClaudeOptions};
 use crate::bedrock::models::claude::claude_request_message::ChatOptions;
 use crate::bedrock::models::claude::claude_request_message::ConversationRequest;
 use crate::bedrock::models::claude::claude_request_message::Message;
 
 pub async fn demo_chat_claude() {
-    let client = ClaudeClient::new("bedrock".to_string(), "us-west-2".to_string());
+    let claude_options = ClaudeOptions::new()
+        .profile_name("bedrock")
+        .region("us-west-2");
+
+    let client = ClaudeClient::new(claude_options).await;
 
     let mut conversation_request = ConversationRequest::default();
 
