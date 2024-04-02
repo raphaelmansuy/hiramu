@@ -20,19 +20,14 @@ pub async fn demo_chat_claude() {
         serde_json::to_string_pretty(&conversation_request).unwrap()
     );
 
-    let response = client
-        .chat(
-            &conversation_request,
-            ChatOptions {
-                model_id: ModelInfo::from_model_name(ModelName::AnthropicClaudeHaiku1x),
-                temperature: Some(0.5),
-                top_p: Some(1.0),
-                top_k: Some(50),
-                max_tokens: 100,
-                stop_sequences: Some(vec!["\n\nHuman:".to_string()]),
-            },
-        )
-        .await;
+    let chat_options =
+        ChatOptions::default()
+            .with_temperature(0.5)
+            .with_model_id(ModelInfo::from_model_name(
+                ModelName::AnthropicClaudeHaiku1x,
+            ));
+
+    let response = client.chat(&conversation_request, &chat_options).await;
 
     match response {
         Ok(response) => {

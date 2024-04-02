@@ -28,7 +28,7 @@ impl ClaudeClient {
     pub async fn chat(
         &self,
         request: &ConversationRequest,
-        options: ChatOptions,
+        options: &ChatOptions,
     ) -> Result<ConversationResponse, ClaudeError> {
         let model_id = options.model_id.to_string();
         let payload: Value = serde_json::to_value(request).unwrap();
