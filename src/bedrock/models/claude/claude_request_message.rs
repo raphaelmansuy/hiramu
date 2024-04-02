@@ -259,20 +259,18 @@ pub struct InvocationMetrics {
 }
 
 /// --------------------------------
-/// 
-
-
-
+///  Stream Message Deserialization
+/// --------------------------------
 
 #[derive(Deserialize, Debug)]
-struct StreamMessage {
+pub struct StreamMessage {
     message: StreamMessageContent,
     #[serde(rename = "type")]
     message_type: String,
 }
 
 #[derive(Deserialize, Debug)]
-struct StreamMessageContent {
+pub struct StreamMessageContent {
     content: Vec<serde_json::Value>,
     id: String,
     model: String,
@@ -285,13 +283,13 @@ struct StreamMessageContent {
 }
 
 #[derive(Deserialize, Debug)]
-struct StreamUsage {
+pub struct StreamUsage {
     input_tokens: u32,
     output_tokens: u32,
 }
 
 #[derive(Deserialize, Debug)]
-struct StreamContentBlock {
+pub struct StreamContentBlock {
     content_block: StreamContentBlockContent,
     index: u32,
     #[serde(rename = "type")]
@@ -299,14 +297,14 @@ struct StreamContentBlock {
 }
 
 #[derive(Deserialize, Debug)]
-struct StreamContentBlockContent {
+pub struct StreamContentBlockContent {
     text: String,
     #[serde(rename = "type")]
     content_type: String,
 }
 
 #[derive(Deserialize, Debug)]
-struct StreamContentBlockDelta {
+pub struct StreamContentBlockDelta {
     delta: StreamDelta,
     index: u32,
     #[serde(rename = "type")]
@@ -314,14 +312,14 @@ struct StreamContentBlockDelta {
 }
 
 #[derive(Deserialize, Debug)]
-struct StreamDelta {
+pub struct StreamDelta {
     text: String,
     #[serde(rename = "type")]
     delta_type: String,
 }
 
 #[derive(Deserialize, Debug)]
-struct StreamMessageDelta {
+pub struct StreamMessageDelta {
     delta: StreamMessageDeltaContent,
     #[serde(rename = "type")]
     delta_type: String,
@@ -329,18 +327,18 @@ struct StreamMessageDelta {
 }
 
 #[derive(Deserialize, Debug)]
-struct StreamMessageDeltaContent {
+pub struct StreamMessageDeltaContent {
     stop_reason: String,
     stop_sequence: Option<serde_json::Value>,
 }
 
 #[derive(Deserialize, Debug)]
-struct StreamMessageDeltaUsage {
+pub struct StreamMessageDeltaUsage {
     output_tokens: u32,
 }
 
 #[derive(Deserialize, Debug)]
-struct StreamInvocationMetrics {
+pub struct StreamInvocationMetrics {
     #[serde(rename = "amazon-bedrock-invocationMetrics")]
     metrics: StreamInvocationMetricsContent,
     #[serde(rename = "type")]
@@ -348,11 +346,16 @@ struct StreamInvocationMetrics {
 }
 
 #[derive(Deserialize, Debug)]
-struct StreamInvocationMetricsContent {
-    firstByteLatency: u32,
-    inputTokenCount: u32,
-    invocationLatency: u32,
-    outputTokenCount: u32,
+pub struct StreamInvocationMetricsContent {
+    
+    #[serde(rename = "firstByteLatency")]
+    first_byte_latency: u32,
+    #[serde(rename = "inputTokenCount")]
+    input_token_count: u32,
+    #[serde(rename = "invocationLatency")]
+    invocation_latency: u32,
+    #[serde(rename = "outputTokenCount")]
+    output_token_count: u32,
 }
 
 
