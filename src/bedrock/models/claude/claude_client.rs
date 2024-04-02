@@ -1,12 +1,13 @@
-use serde_json::Value;
+use serde_json::{json, Value};
 
 use crate::bedrock::bedrock_client::BedrockClient;
 use crate::bedrock::models::claude::claude_error::ClaudeError;
 use crate::bedrock::models::claude::claude_request_message::{
-    ChatOptions, ConversationRequest, ConversationResponse,
+    ChatOptions, ConversationRequest, ConversationResponse,StreamResult
 };
 use futures::stream::Stream;
-use aws_sdk_bedrockruntime::Error;
+use futures::StreamExt;
+
 
 pub struct ClaudeClient {
     bedrock_client: BedrockClient,
@@ -54,7 +55,7 @@ impl ClaudeClient {
         &self,
         request: &ConversationRequest,
         options: ChatOptions,
-    ) -> impl Stream<Item = Result<Value, Error>> {
+    ) -> impl Stream<Item = Result<StreamResult, ClaudeError>> {
         let model_id = options.model_id.to_string();
         let payload: Value = serde_json::to_value(request).unwrap();
         let response = self
@@ -66,8 +67,16 @@ impl ClaudeClient {
                 Some(self.region.clone()),
             )
             .await;
-
-
-        response
+    
+        response.map(|result| {
+            result 
+                .map_err(|err| ClaudeError::Unknown(err.to_string()))
+                .and_then(|value| {
+                    let stream_result = serde_json::from_value(value);
+                    stream_result
+                    .map_err(|err| ClaudeError::Json(err))
+                })
+              
+        })
     }
 }

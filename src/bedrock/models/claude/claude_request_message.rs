@@ -1,4 +1,5 @@
-use serde::{Deserialize, Serialize};
+use serde::{ Deserialize, Serialize};
+
 
 pub struct ChatOptions {
     pub model_id: String,
@@ -171,4 +172,242 @@ pub struct ResponseContentBlock {
 pub struct UsageInfo {
     pub input_tokens: i32,
     pub output_tokens: i32,
+}
+
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StreamResult {
+    #[serde(rename = "type")]
+    pub result_type: String,
+    #[serde(flatten)]
+    pub data: serde_json::Value, // Temporarily hold the data as a serde_json::Value
+}
+
+
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MessageStart {
+    pub message: Message,
+}
+
+
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Usage {
+    pub input_tokens: i32,
+    pub output_tokens: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ContentBlockStart {
+    pub content_block: ContentBlock,
+    pub index: i32,
+}
+
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ContentBlockDelta {
+    pub delta: Delta,
+    pub index: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Delta {
+    pub text: String,
+    #[serde(rename = "type")]
+    pub delta_type: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ContentBlockStop {
+    pub index: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MessageDelta {
+    pub delta: MessageDeltaData,
+    pub usage: MessageDeltaUsage,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MessageDeltaData {
+    pub stop_reason: String,
+    pub stop_sequence: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MessageDeltaUsage {
+    pub output_tokens: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MessageStop {
+    #[serde(rename = "amazon-bedrock-invocationMetrics")]
+    pub invocation_metrics: InvocationMetrics,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InvocationMetrics {
+    #[serde(rename = "firstByteLatency")]
+    pub first_byte_latency: i32,
+    #[serde(rename = "inputTokenCount")]
+    pub input_token_count: i32,
+    #[serde(rename = "invocationLatency")]
+    pub invocation_latency: i32,
+    #[serde(rename = "outputTokenCount")]
+    pub output_token_count: i32,
+}
+
+/// --------------------------------
+/// 
+
+
+
+
+#[derive(Deserialize, Debug)]
+struct StreamMessage {
+    message: StreamMessageContent,
+    #[serde(rename = "type")]
+    message_type: String,
+}
+
+#[derive(Deserialize, Debug)]
+struct StreamMessageContent {
+    content: Vec<serde_json::Value>,
+    id: String,
+    model: String,
+    role: String,
+    stop_reason: Option<serde_json::Value>,
+    stop_sequence: Option<serde_json::Value>,
+    #[serde(rename = "type")]
+    content_type: String,
+    usage: StreamUsage,
+}
+
+#[derive(Deserialize, Debug)]
+struct StreamUsage {
+    input_tokens: u32,
+    output_tokens: u32,
+}
+
+#[derive(Deserialize, Debug)]
+struct StreamContentBlock {
+    content_block: StreamContentBlockContent,
+    index: u32,
+    #[serde(rename = "type")]
+    block_type: String,
+}
+
+#[derive(Deserialize, Debug)]
+struct StreamContentBlockContent {
+    text: String,
+    #[serde(rename = "type")]
+    content_type: String,
+}
+
+#[derive(Deserialize, Debug)]
+struct StreamContentBlockDelta {
+    delta: StreamDelta,
+    index: u32,
+    #[serde(rename = "type")]
+    delta_type: String,
+}
+
+#[derive(Deserialize, Debug)]
+struct StreamDelta {
+    text: String,
+    #[serde(rename = "type")]
+    delta_type: String,
+}
+
+#[derive(Deserialize, Debug)]
+struct StreamMessageDelta {
+    delta: StreamMessageDeltaContent,
+    #[serde(rename = "type")]
+    delta_type: String,
+    usage: StreamMessageDeltaUsage,
+}
+
+#[derive(Deserialize, Debug)]
+struct StreamMessageDeltaContent {
+    stop_reason: String,
+    stop_sequence: Option<serde_json::Value>,
+}
+
+#[derive(Deserialize, Debug)]
+struct StreamMessageDeltaUsage {
+    output_tokens: u32,
+}
+
+#[derive(Deserialize, Debug)]
+struct StreamInvocationMetrics {
+    #[serde(rename = "amazon-bedrock-invocationMetrics")]
+    metrics: StreamInvocationMetricsContent,
+    #[serde(rename = "type")]
+    metrics_type: String,
+}
+
+#[derive(Deserialize, Debug)]
+struct StreamInvocationMetricsContent {
+    firstByteLatency: u32,
+    inputTokenCount: u32,
+    invocationLatency: u32,
+    outputTokenCount: u32,
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_deserialize_stream_documents() {
+        let documents = [
+            r#"{"message":{"content":[],"id":"msg_01SSVH6oAf3LoGzpz3YrdxgH","model":"claude-3-haiku-48k-20240307","role":"assistant","stop_reason":null,"stop_sequence":null,"type":"message","usage":{"input_tokens":20,"output_tokens":1}},"type":"message_start"}"#,
+            r#"{"content_block":{"text":"","type":"text"},"index":0,"type":"content_block_start"}"#,
+            r#"{"delta":{"text":"The","type":"text_delta"},"index":0,"type":"content_block_delta"}"#,
+            r#"{"delta":{"text":" capital","type":"text_delta"},"index":0,"type":"content_block_delta"}"#,
+            r#"{"delta":{"text":" of","type":"text_delta"},"index":0,"type":"content_block_delta"}"#,
+            r#"{"delta":{"text":" France","type":"text_delta"},"index":0,"type":"content_block_delta"}"#,
+            r#"{"delta":{"text":" is","type":"text_delta"},"index":0,"type":"content_block_delta"}"#,
+            r#"{"delta":{"text":" Paris","type":"text_delta"},"index":0,"type":"content_block_delta"}"#,
+            r#"{"delta":{"text":".","type":"text_delta"},"index":0,"type":"content_block_delta"}"#,
+            r#"{"index":0,"type":"content_block_stop"}"#,
+            r#"{"delta":{"stop_reason":"end_turn","stop_sequence":null},"type":"message_delta","usage":{"output_tokens":10}}"#,
+            r#"{"amazon-bedrock-invocationMetrics":{"firstByteLatency":320,"inputTokenCount":20,"invocationLatency":394,"outputTokenCount":10},"type":"message_stop"}"#,
+        ];
+
+        for document in &documents {
+            match serde_json::from_str::<serde_json::Value>(document).unwrap() {
+                serde_json::Value::Object(map) => {
+                    match map.get("type").and_then(|v| v.as_str()) {
+                        Some("message_start") => {
+                            let _message: StreamMessage = serde_json::from_str(document).unwrap();
+                        }
+                        Some("content_block_start") => {
+                            let _content_block: StreamContentBlock =
+                                serde_json::from_str(document).unwrap();
+                        }
+                        Some("content_block_delta") => {
+                            let _content_block_delta: StreamContentBlockDelta =
+                                serde_json::from_str(document).unwrap();
+                        }
+                        Some("content_block_stop") => {
+                            // No specific struct for content_block_stop
+                        }
+                        Some("message_delta") => {
+                            let _message_delta: StreamMessageDelta =
+                                serde_json::from_str(document).unwrap();
+                        }
+                        Some("message_stop") => {
+                            let _invocation_metrics: StreamInvocationMetrics =
+                                serde_json::from_str(document).unwrap();
+                        }
+                        _ => panic!("Unknown document type"),
+                    }
+                }
+                _ => panic!("Invalid JSON document"),
+            }
+        }
+    }
 }
