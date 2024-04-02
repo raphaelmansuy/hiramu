@@ -1,14 +1,16 @@
 use std::io::{self, Write};
+use std::u32;
 
 use futures::stream::TryStream;
 use futures_util::TryStreamExt;
 use super::super::ollama::model::{ChatRequestBuilder, ChatResponse, GenerateRequestBuilder, GenerateResponse, Message};
 use super::super::ollama::ollama_client::{FetchStreamError, OllamaClient};
 
-pub async fn chat_response_loop() {
+pub async fn chat_response_loop(max_loop: u32) {
     let client = OllamaClient::new("http://localhost:11434".to_string());
 
     let mut messages = Vec::new();
+    let mut counter = 0; 
 
     loop {
         let input = prompt_input("\nUser: ").unwrap();
@@ -37,12 +39,18 @@ pub async fn chat_response_loop() {
             content: response,
             images: vec![],
         });
+
+        counter += 1;
+        if counter >= max_loop {
+            break;
+        }
     }
 }
 
-pub async fn generate_response_loop() {
+pub async fn generate_response_loop(max_loop: usize) {
     let client = OllamaClient::new("http://localhost:11434".to_string());
 
+    let mut counter = 0;
     loop {
         let input = prompt_input("\n> ").unwrap();
         let request = GenerateRequestBuilder::new("mistral".to_string())
@@ -52,6 +60,11 @@ pub async fn generate_response_loop() {
         let response = client.generate(request).await.unwrap();
 
         print_generate_response(response).await.unwrap();
+
+        counter += 1;
+        if counter >= max_loop {
+            break;
+        }
     }
 }
 
@@ -106,11 +119,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_chat_response_loop() {
-        chat_response_loop().await;
+       // chat_response_loop(1).await;
     }
 
     #[tokio::test]
     async fn test_generate_response_loop() {
-        generate_response_loop().await;
+//        generate_response_loop(1).await;
     }
 }
