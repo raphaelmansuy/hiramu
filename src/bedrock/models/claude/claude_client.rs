@@ -76,6 +76,11 @@ impl ClaudeClient {
             )
             .await;
 
+        let response = match response {
+            Ok(response) => response,
+            Err(err) => return Err(ClaudeError::ApiError(err.to_string())),
+        };
+
         Ok(response
             .map_ok(|value| {
                 serde_json::from_value(value).map_err(ClaudeError::Json)

@@ -35,6 +35,14 @@ pub async fn demo_generate_raw_stream() {
         )
         .await;
 
+    let stream = match stream {
+        Ok(stream) => stream,
+        Err(err) => {
+            println!("Error: {:?}", err);
+            return;
+        }
+    };
+
     // consumme the stream and print the response
     stream
         .try_for_each(|chunk| async move {

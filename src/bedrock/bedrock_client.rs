@@ -37,10 +37,18 @@ impl BedrockClient {
         payload: Value,
         profile_name: Option<String>,
         region: Option<String>,
-    ) -> impl Stream<Item = Result<Value, BedrockError>> {
+    ) -> Result<impl Stream<Item = Result<Value, BedrockError>>,BedrockError> {
         let client = Self::create_client(profile_name.as_deref(), region.as_deref()).await;
 
-        let payload_bytes = serde_json::to_vec(&payload).unwrap();
+        let payload_bytes = serde_json::to_vec(&payload); 
+
+        let payload_bytes = match payload_bytes {
+            Ok(bytes) => bytes,
+            Err(err) => {
+                return Err(BedrockError::from(err))
+            }
+        };
+        
         let payload_blob = aws_smithy_types::Blob::new(payload_bytes);
 
         let (sender, receiver) = tokio::sync::mpsc::unbounded_channel();
@@ -91,7 +99,7 @@ impl BedrockClient {
             }
         });
 
-        UnboundedReceiverStream::new(receiver)
+        Ok(UnboundedReceiverStream::new(receiver))
     }
 
     pub async fn generate_raw(
