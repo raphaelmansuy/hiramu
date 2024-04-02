@@ -2,7 +2,7 @@ use std::io::{self, Write};
 
 use futures::stream::TryStream;
 use futures_util::TryStreamExt;
-use super::super::ollama::models::{ChatRequestBuilder, ChatResponse, GenerateRequestBuilder, GenerateResponse, Message};
+use super::super::ollama::model::{ChatRequestBuilder, ChatResponse, GenerateRequestBuilder, GenerateResponse, Message};
 use super::super::ollama::ollama_client::{FetchStreamError, OllamaClient};
 
 pub async fn chat_response_loop() {

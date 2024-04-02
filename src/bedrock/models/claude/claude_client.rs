@@ -1,4 +1,3 @@
-use serde_json::{Value};
 
 use crate::bedrock::bedrock_client::BedrockClient;
 use crate::bedrock::models::claude::claude_error::ClaudeError;
@@ -31,7 +30,13 @@ impl ClaudeClient {
         options: &ChatOptions,
     ) -> Result<ConversationResponse, ClaudeError> {
         let model_id = options.model_id.to_string();
-        let payload: Value = serde_json::to_value(request).unwrap();
+        let payload= serde_json::to_value(request);
+
+        let payload = match payload {
+            Ok(payload) => payload,
+            Err(err) => return Err(ClaudeError::Json(err)),
+        };
+        
         let response = self
             .bedrock_client
             .generate_raw(
@@ -55,9 +60,15 @@ impl ClaudeClient {
         &self,
         request: &ConversationRequest,
         options: &ChatOptions,
-    ) -> impl Stream<Item = Result<StreamResult, ClaudeError>> {
+    ) ->  Result<impl Stream<Item = Result<StreamResult, ClaudeError>>, ClaudeError>{
         let model_id = options.model_id.to_string();
-        let payload: Value = serde_json::to_value(request).unwrap();
+        let payload = serde_json::to_value(request);
+
+        let payload = match payload {
+            Ok(payload) => payload,
+            Err(err) => return Err(ClaudeError::Json(err)),
+        };
+
         let response = self
             .bedrock_client
             .generate_raw_stream(
@@ -68,7 +79,7 @@ impl ClaudeClient {
             )
             .await;
     
-        response.map(|result| {
+        Ok(response.map(|result| {
             result 
                 .map_err(|err| ClaudeError::Unknown(err.to_string()))
                 .and_then(|value| {
@@ -77,6 +88,6 @@ impl ClaudeClient {
                     .map_err(|err| ClaudeError::Json(err))
                 })
               
-        })
+        }))
     }
 }

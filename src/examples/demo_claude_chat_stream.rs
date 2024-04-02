@@ -33,6 +33,14 @@ pub async fn demo_chat_claude_with_stream() {
         )
         .await;
 
+    let response_stream = match response_stream {
+        Ok(response_stream) => response_stream,
+        Err(e) => {
+            println!("Error: {:?}", e);
+            return;
+        }
+    };
+
     // consumme the stream and print the response
     response_stream
         .try_for_each(|chunk| async move {

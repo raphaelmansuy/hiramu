@@ -1,4 +1,4 @@
-use crate::ollama::models::{GenerateRequest, GenerateResponse, ChatRequest, ChatResponse};
+use crate::ollama::model::{GenerateRequest, GenerateResponse, ChatRequest, ChatResponse};
 use futures::stream::TryStreamExt;
 use reqwest::{Client, RequestBuilder};
 use serde::de::DeserializeOwned;
