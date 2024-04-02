@@ -29,7 +29,7 @@ pub async fn demo_chat_claude_with_stream() {
     let response_stream = client
         .chat_with_stream(
             &conversation_request,
-            chat_options
+            &chat_options
         )
         .await;
 

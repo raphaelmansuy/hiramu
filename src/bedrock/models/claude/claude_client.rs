@@ -54,7 +54,7 @@ impl ClaudeClient {
     pub async fn chat_with_stream(
         &self,
         request: &ConversationRequest,
-        options: ChatOptions,
+        options: &ChatOptions,
     ) -> impl Stream<Item = Result<StreamResult, ClaudeError>> {
         let model_id = options.model_id.to_string();
         let payload: Value = serde_json::to_value(request).unwrap();
