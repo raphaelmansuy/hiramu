@@ -1,12 +1,10 @@
-
 use crate::bedrock::bedrock_client::BedrockClient;
 use crate::bedrock::models::claude::claude_error::ClaudeError;
 use crate::bedrock::models::claude::claude_request_message::{
-    ChatOptions, ConversationRequest, ConversationResponse,StreamResult
+    ChatOptions, ConversationRequest, ConversationResponse, StreamResult,
 };
 use futures::stream::Stream;
-use futures::StreamExt;
-
+use futures::TryStreamExt;
 
 pub struct ClaudeClient {
     bedrock_client: BedrockClient,
@@ -30,13 +28,13 @@ impl ClaudeClient {
         options: &ChatOptions,
     ) -> Result<ConversationResponse, ClaudeError> {
         let model_id = options.model_id.to_string();
-        let payload= serde_json::to_value(request);
+        let payload = serde_json::to_value(request);
 
         let payload = match payload {
             Ok(payload) => payload,
             Err(err) => return Err(ClaudeError::Json(err)),
         };
-        
+
         let response = self
             .bedrock_client
             .generate_raw(
@@ -48,9 +46,8 @@ impl ClaudeClient {
             .await;
         match response {
             Ok(response) => {
-                //display the response, JSON formatted
-                let conversaton_response = serde_json::from_value(response).unwrap();
-                Ok(conversaton_response)
+                let conversation_response = serde_json::from_value(response).unwrap();
+                Ok(conversation_response)
             }
             Err(err) => Err(ClaudeError::Unknown(err.to_string())),
         }
@@ -60,7 +57,7 @@ impl ClaudeClient {
         &self,
         request: &ConversationRequest,
         options: &ChatOptions,
-    ) ->  Result<impl Stream<Item = Result<StreamResult, ClaudeError>>, ClaudeError>{
+    ) -> Result<impl Stream<Item = Result<StreamResult, ClaudeError>>, ClaudeError> {
         let model_id = options.model_id.to_string();
         let payload = serde_json::to_value(request);
 
@@ -78,16 +75,12 @@ impl ClaudeClient {
                 Some(self.region.clone()),
             )
             .await;
-    
-        Ok(response.map(|result| {
-            result 
-                .map_err(|err| ClaudeError::Unknown(err.to_string()))
-                .and_then(|value| {
-                    let stream_result = serde_json::from_value(value);
-                    stream_result
-                    .map_err(|err| ClaudeError::Json(err))
-                })
-              
-        }))
+
+        Ok(response
+            .map_ok(|value| {
+                serde_json::from_value(value).map_err(ClaudeError::Json)
+            })
+            .map_err(|err| ClaudeError::Unknown(err.to_string()))
+            .and_then(futures::future::ready))
     }
 }
