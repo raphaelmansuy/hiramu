@@ -1,8 +1,42 @@
+//! This module defines the data structures and builders for interacting with the Ollama API.
+//!
+//! The main components of this module are:
+//! - `GenerateRequest` and `GenerateRequestBuilder`: Represents a request to generate text using the Ollama API.
+//! - `GenerateResponse`: Represents a response from the Ollama API for a generate request.
+//! - `ChatRequest` and `ChatRequestBuilder`: Represents a request to initiate a chat session with the Ollama API.
+//! - `ChatResponse`: Represents a response from the Ollama API for a chat request.
+//! - `Message`: Represents a message in a chat session, containing the role and content.
+//!
+//! The module provides a convenient way to construct requests using the builder pattern and
+//! deserialize responses from the Ollama API.
+//!
+//! Example usage:
+//!
+//! ```
+//! use ollama::model::{GenerateRequestBuilder, ChatRequestBuilder, Message};
+//!
+//! // Create a generate request
+//! let generate_request = GenerateRequestBuilder::new("model_id".to_string())
+//!     .prompt("Hello, how are you?".to_string())
+//!     .build();
+//!
+//! // Create a chat request
+//! let chat_request = ChatRequestBuilder::new("model_id".to_string())
+//!     .messages(vec![
+//!         Message {
+//!             role: "user".to_string(),
+//!             content: "Hello, how are you?".to_string(),
+//!             images: vec![],
+//!         },
+//!     ])
+//!     .build();
+//! ```
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 use serde_json::Value;
 use pin_project::pin_project;
 
+/// Represents a request to generate text using the Ollama API.
 #[derive(Debug, Serialize, Clone)]
 pub struct GenerateRequest {
     pub model: String,
@@ -27,7 +61,7 @@ pub struct GenerateRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub keep_alive: Option<String>,
 }
-
+/// Represents a response from the Ollama API for a generate request.
 #[pin_project]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GenerateResponse {
@@ -44,6 +78,7 @@ pub struct GenerateResponse {
     pub eval_duration: Option<u128>,
 }
 
+// Implement the TryFrom trait to convert a JSON string into a GenerateResponse.
 impl TryFrom<&str> for GenerateResponse {
     type Error = serde_json::Error;
     
@@ -51,7 +86,7 @@ impl TryFrom<&str> for GenerateResponse {
         serde_json::from_str(json)
     }
 }
-
+// Represents a builder for constructing a GenerateRequest.
 pub struct GenerateRequestBuilder {
     model: String,
     prompt: Option<String>,
@@ -67,6 +102,8 @@ pub struct GenerateRequestBuilder {
 }
 
 impl GenerateRequestBuilder {
+    // Create a new GenerateRequestBuilder with the specified model.
+    // The model is a required field and must be provided.
     pub fn new(model: String) -> Self {
         Self {
             model,
@@ -82,57 +119,98 @@ impl GenerateRequestBuilder {
             keep_alive: None,
         }
     }
-    
+
+    // Set the prompt field of the GenerateRequestBuilder.
+    // This field is used to provide a prompt for the generation process.
+    // The value should be a string representing the prompt.
+    // If the value is not provided, the prompt will be empty.
     pub fn prompt(mut self, prompt: String) -> Self {
         self.prompt = Some(prompt);
         self
     }
     
+
+    // Set the images field of the GenerateRequestBuilder.
+    // This field is used to provide a list of images for the generation process.
+    // The value should be a vector of strings representing the images.
+    // The images should be base64 encoded strings.
+    // If the value is not provided, the images will be empty.
     pub fn images(mut self, images: Vec<String>) -> Self {
         self.images = Some(images);
         self
     }
 
+    // Set the format field of the GenerateRequestBuilder.
+    // This field is used to specify the format of the response.
+    // The value should be a string representing the format.
+    // If the value is not provided, the response will be returned as a string.
     pub fn format(mut self, format: String) -> Self {
         self.format = Some(format);
         self
     }
 
+    // Set the options field of the GenerateRequestBuilder.
+    // This field is used to provide options for the generation process.
+    // The value should be a JSON object representing the options.
     pub fn options(mut self, options: Value) -> Self {
         self.options = Some(options);
         self
     }
 
+    // Set the system field of the GenerateRequestBuilder.
+    // This field is used to provide a system prompt for the generation process.
+    // The value should be a string representing the system prompt.
+    // If the value is not provided, the system prompt will be empty.
     pub fn system(mut self, system: String) -> Self {
         self.system = Some(system);
         self
     }
 
+    // Set the template field of the GenerateRequestBuilder.
+    // This field is used to provide a template for the generation process.
+    // The value should be a string representing the template.
+    // If the value is not provided, the template will be empty.
     pub fn template(mut self, template: String) -> Self {
         self.template = Some(template);
         self
     }
 
+    // Set the context field of the GenerateRequestBuilder.
+    // This field is used to provide a context for the generation process.
+    // The value should be a vector of integers representing the context.
+    // If the value is not provided, the context will be empty.
     pub fn context(mut self, context: Vec<u32>) -> Self {
         self.context = Some(context);
         self
     }
 
+
+    // Set the stream field of the GenerateRequestBuilder.
+    // This field is used to return a stream of responses from the API.
+    // If the value is not provided, the response will be processed and returned as a string.
     pub fn stream(mut self, stream: bool) -> Self {
         self.stream = Some(stream);
         self
     }
 
+    // Set the raw field of the GenerateRequestBuilder.
+    // This field is used to return the raw response from the API without any additional processing.
+    // If the value is not provided, the response will be processed and returned as a string.
     pub fn raw(mut self, raw: bool) -> Self {
         self.raw = Some(raw);
         self
     }
 
+    // Set the keep_alive field of the GenerateRequestBuilder.
+    // This field is used to keep the connection alive for a specified duration.
+    // The value should be a string representing the duration in seconds.
+    // If the value is not provided, the connection will be closed after the response is received.
     pub fn keep_alive(mut self, keep_alive: String) -> Self {
         self.keep_alive = Some(keep_alive);
         self
     }
 
+    // Build the GenerateRequest struct from the builder.
     pub fn build(self) -> GenerateRequest {
         GenerateRequest {
             model: self.model,
@@ -150,12 +228,13 @@ impl GenerateRequestBuilder {
     }
 }
 
+// Implement the From trait to convert a GenerateRequestBuilder into a JSON string.
 impl From<GenerateRequestBuilder> for String {
     fn from(request: GenerateRequestBuilder) -> Self {
         serde_json::to_string(&request.build()).unwrap()
     }
 }
-
+/// Represents a request to initiate a chat session with the Ollama API.
 #[derive(Debug, Serialize, Clone)]
 pub struct ChatRequest {
     pub model: String,
@@ -172,6 +251,7 @@ pub struct ChatRequest {
     pub keep_alive: Option<String>,
 }
 
+// Represents a message in a chat session, containing the role and content.
 #[derive(Debug, Serialize,Deserialize, Clone)]
 pub struct Message {
     pub role: String,
@@ -180,6 +260,7 @@ pub struct Message {
     pub images: Vec<String>,
 }
 
+/// Represents a response from the Ollama API for a chat request.
 #[pin_project]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ChatResponse {

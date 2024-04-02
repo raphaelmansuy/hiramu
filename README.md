@@ -1,14 +1,6 @@
 # Hiramu: A Foundational Layer for an AI Operating System with Agent Support
 
-Hiramu is a Rust API that serves as a foundational layer for building an AI operating system with native support for AI agents. It provides a unified interface for interacting with various AI services, including Ollama, Bedrock, and Claude, enabling seamless integration and communication between different components of the AI system. Hiramu simplifies the process of making requests to these services and handling their responses, acting as a central hub for AI functionality.
-
-The key feature of Hiramu will be its built-in support for AI agents. Agents are autonomous entities that can perform tasks, make decisions, and interact with other components of the AI system. Hiramu will provide a standardized way to define, manage, and deploy AI agents, making it easier to build complex AI applications that involve multiple agents working together.
-
-With Hiramu, developers can focus on designing and implementing high-level agent behaviors and interactions, while relying on the robust and efficient infrastructure provided by this foundational layer. Hiramu abstracts away the low-level details of communication, coordination, and resource management, allowing developers to concentrate on the core logic of their AI agents.
-
-By leveraging Hiramu as the foundation, developers can create AI systems that exhibit intelligent behavior, adapt to changing environments, and collaborate with other agents to achieve common goals. Hiramu's agent-centric approach enables the development of sophisticated AI applications across various domains, such as autonomous systems, robotics, intelligent assistants, and decision support systems.
-
-In this early alpha release, Hiramu provides an API to access several AI foundation models and local models, including Ollama for local AI model serving, Bedrock for AWS AI platform integration, and Claude for advanced language models. The API offers a unified and developer-friendly interface to interact with these services, handle request and response serialization, support asynchronous request handling and streaming, and provide utility functions and example code to facilitate usage.
+Hiramu is an AI Toolbox.
 
 ## Features
 

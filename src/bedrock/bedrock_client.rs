@@ -7,6 +7,18 @@ use serde_json::Value;
 use std::borrow::Cow;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
+/// Configuration options for creating a `BedrockClient`.
+///
+/// This struct holds optional configuration values that can be used when creating a `BedrockClient`.
+/// These include the AWS profile name, region, endpoint URL, and behavior version.
+///
+/// # Fields
+///
+/// * `profile_name` - The name of the AWS profile to use for authentication. If `None`, the default profile is used.
+/// * `region` - The AWS region to use. If `None`, the region is determined from the environment or AWS configuration.
+/// * `endpoint_url` - The endpoint URL to use for the Bedrock service. If `None`, the default endpoint for the region is used.
+/// * `behavior_version` - The behavior version to use for the Bedrock service. If `None`, the latest version is used.
+///
 #[derive(Debug, Clone)]
 pub struct BedrockClientOptions {
     profile_name: Option<String>,
@@ -50,13 +62,35 @@ pub struct BedrockClient {
     client: Client,
 }
 
+//
 impl BedrockClient {
     /// Constructs a new `BedrockClient`.
+    ///
+    /// This function takes a `BedrockClientOptions` struct, which provides configuration options for the client,
+    /// and returns a new `BedrockClient`.
+    ///
+    /// # Arguments
+    ///
+    /// * `options` - A `BedrockClientOptions` struct that provides configuration options for the client.
+    ///
+    /// # Returns
+    ///
+    /// This function returns a new `BedrockClient`.
     pub async fn new(options: BedrockClientOptions) -> Self {
         let client = Self::create_client(options).await;
         Self { client }
     }
-
+    /// Creates a new `Client` using the provided options.
+    ///
+    /// This function is used internally by `new` to create a new `Client`.
+    ///
+    /// # Arguments
+    ///
+    /// * `options` - A `BedrockClientOptions` struct that provides configuration options for the client.
+    ///
+    /// # Returns
+    ///
+    /// This function returns a new `Client`.
     async fn create_client(options: BedrockClientOptions) -> Client {
         let mut config_loader = aws_config::ConfigLoader::default();
 
@@ -81,6 +115,20 @@ impl BedrockClient {
         Client::new(&config)
     }
 
+    /// Generates a raw stream of responses from the Bedrock service.
+    ///
+    /// This function takes a model ID and a payload, sends a request to the Bedrock service,
+    /// and returns a stream of responses.
+    ///
+    /// # Arguments
+    ///
+    /// * `model_id` - A string that represents the model ID.
+    /// * `payload` - A `Value` that represents the payload to send in the request.
+    ///
+    /// # Returns
+    ///
+    /// This function returns a `Result` that contains a stream of responses if the operation was successful,
+    /// or an error if the operation failed.
     pub async fn generate_raw_stream(
         &self,
         model_id: String,
@@ -148,6 +196,20 @@ impl BedrockClient {
         Ok(UnboundedReceiverStream::new(receiver))
     }
 
+    /// Generates a raw response from the Bedrock service.
+    ///
+    /// This function takes a model ID and a payload, sends a request to the Bedrock service,
+    /// and returns a response.
+    ///
+    /// # Arguments
+    ///
+    /// * `model_id` - A string that represents the model ID.
+    /// * `payload` - A `Value` that represents the payload to send in the request.
+    ///
+    /// # Returns
+    ///
+    /// This function returns a `Result` that contains a response if the operation was successful,
+    /// or an error if the operation failed.
     pub async fn generate_raw(&self, model_id: String, payload: Value) -> Result<Value, Error> {
         let payload_bytes = serde_json::to_vec(&payload).unwrap();
         let payload_blob = aws_smithy_types::Blob::new(payload_bytes);
