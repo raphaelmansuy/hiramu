@@ -1,7 +1,7 @@
 use futures_util::stream::TryStream; 
 use futures_util::stream::TryStreamExt;
-use hiramu::ollama::models::GenerateRequestBuilder;
-use hiramu::ollama::models::GenerateResponse; 
+use hiramu::ollama::model::GenerateRequestBuilder;
+use hiramu::ollama::model::GenerateResponse; 
 use hiramu::ollama::ollama_client::FetchStreamError;
 use hiramu::ollama::ollama_client::OllamaClient;
 use hiramu::util::fetch_and_base64_encode_image;

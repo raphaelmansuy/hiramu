@@ -1,27 +1,18 @@
-use crate::ollama::models::{GenerateRequest, GenerateResponse, ChatRequest, ChatResponse};
-use futures::stream::{TryStreamExt};
+use crate::ollama::model::{GenerateRequest, GenerateResponse, ChatRequest, ChatResponse};
+use futures::stream::TryStreamExt;
 use reqwest::{Client, RequestBuilder};
-use serde::{de::DeserializeOwned};
-use thiserror::Error;
+use serde::de::DeserializeOwned;
 use futures::stream::TryStream;
+
+use crate::error::HiramuError;
+
+pub type FetchStreamError = HiramuError;
 
 pub struct OllamaClient {
     client: Client,
     base_url: String,
 }
 
-#[derive(Error, Debug)]
-pub enum FetchStreamError {
-    /// Request failed with the specified status code.
-    #[error("Request failed with status: {0}")]
-    RequestFailed(reqwest::StatusCode),
-    /// Failed to deserialize the received data.
-    #[error("Failed to deserialize data: {0}")]
-    DeserializationFailed(serde_json::Error),
-    /// An error occurred during the request.
-    #[error("Request error: {0}")]
-    RequestError(#[from] reqwest::Error),
-}
 
 /// Fetches a stream of data from the specified URL and deserializes it into chunks of type `T`.
 ///
@@ -44,14 +35,14 @@ where
     let body = response.bytes_stream();
 
     if status.is_success() {
-        Ok(body.map_err(FetchStreamError::RequestError).and_then(|chunk| {
+        Ok(body.map_err(|e|   FetchStreamError::from(e)).and_then(|chunk| {
             async move {
-                let chunk = serde_json::from_slice(&chunk).map_err(FetchStreamError::DeserializationFailed)?;
+                let chunk = serde_json::from_slice(&chunk).map_err(|e| FetchStreamError::from(e))?;
                 Ok(chunk)
             }
         }))
     } else {
-        Err(FetchStreamError::RequestFailed(status))
+        Err(FetchStreamError::InvalidResponse(format!("HTTP error: {}", status)))
     }
 }
 
