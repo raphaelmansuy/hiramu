@@ -1,3 +1,4 @@
+use crate::bedrock::bedrock_error::BedrockError;
 use aws_config::Region;
 use aws_sdk_bedrock::config::BehaviorVersion;
 use aws_sdk_bedrockruntime::{Client, Error};
@@ -36,7 +37,7 @@ impl BedrockClient {
         payload: Value,
         profile_name: Option<String>,
         region: Option<String>,
-    ) -> impl Stream<Item = Result<Value, Error>> {
+    ) -> impl Stream<Item = Result<Value, BedrockError>> {
         let client = Self::create_client(profile_name.as_deref(), region.as_deref()).await;
 
         let payload_bytes = serde_json::to_vec(&payload).unwrap();
@@ -70,7 +71,9 @@ impl BedrockClient {
                                 }
                             }
                             Err(err) => {
-                                sender.send(Err(Error::from(err))).unwrap();
+                                sender
+                                    .send(Err(BedrockError::ApiError(err.to_string())))
+                                    .unwrap();
                                 break;
                             }
                             Ok(None) => {
@@ -81,7 +84,9 @@ impl BedrockClient {
                     }
                 }
                 Err(err) => {
-                    sender.send(Err(Error::from(err))).unwrap();
+                    sender
+                        .send(Err(BedrockError::ApiError(err.to_string())))
+                        .unwrap();
                 }
             }
         });
