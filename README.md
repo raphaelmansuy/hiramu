@@ -143,7 +143,7 @@ We welcome contributions from the open-source community to enhance Hiramu and ex
 
 ## License
 
-Hiramu is released under the [MIT License](LICENSE.md).
+Hiramu is released under the [MIT License](./LICENSE.md).
 
 ## Contact
 
