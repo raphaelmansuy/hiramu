@@ -36,6 +36,8 @@ use std::convert::TryFrom;
 use serde_json::Value;
 use pin_project::pin_project;
 
+use super::OllamaError;
+
 /// Represents a request to generate text using the Ollama API.
 #[derive(Debug, Serialize, Clone)]
 pub struct GenerateRequest {
@@ -80,12 +82,18 @@ pub struct GenerateResponse {
 
 // Implement the TryFrom trait to convert a JSON string into a GenerateResponse.
 impl TryFrom<&str> for GenerateResponse {
-    type Error = serde_json::Error;
-    
+    type Error = OllamaError;
+
     fn try_from(json: &str) -> Result<Self, Self::Error> {
-        serde_json::from_str(json)
+        serde_json::from_str(json).map_err(|e| {
+            OllamaError::DeserializationError(format!(
+                "Failed to deserialize GenerateResponse: {}",
+                e
+            ))
+        })
     }
 }
+
 // Represents a builder for constructing a GenerateRequest.
 pub struct GenerateRequestBuilder {
     model: String,
@@ -277,10 +285,15 @@ pub struct ChatResponse {
 }
 
 impl TryFrom<&str> for ChatResponse {
-    type Error = serde_json::Error;
-    
+    type Error = OllamaError;
+
     fn try_from(json: &str) -> Result<Self, Self::Error> {
-        serde_json::from_str(json)
+        serde_json::from_str(json).map_err(|e| {
+            OllamaError::DeserializationError(format!(
+                "Failed to deserialize ChatResponse: {}",
+                e
+            ))
+        })
     }
 }
 
