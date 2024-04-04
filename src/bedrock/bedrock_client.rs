@@ -1,4 +1,4 @@
-use crate::bedrock::bedrock_error::BedrockError;
+use crate::bedrock::error::BedrockError;
 use aws_config::Region;
 use aws_sdk_bedrock::config::BehaviorVersion;
 use aws_sdk_bedrockruntime::{Client, Error};
@@ -173,10 +173,9 @@ impl BedrockClient {
                                 }
                             }
                             Err(err) => {
-                                println!("Error: {:?}", err);
-                                sender
-                                    .send(Err(BedrockError::ApiError(err.to_string())))
-                                    .unwrap();
+                                let sdk_error = err;
+                                let bedrock_error = BedrockError::from(sdk_error);
+                                sender.send(Err(bedrock_error)).unwrap();
                                 break;
                             }
                             Ok(None) => {
@@ -187,9 +186,8 @@ impl BedrockClient {
                     }
                 }
                 Err(err) => {
-                    sender
-                        .send(Err(BedrockError::ApiError(err.to_string())))
-                        .unwrap();
+                    let bedrock_error = BedrockError::from(err);
+                    sender.send(Err(bedrock_error)).unwrap();
                 }
             }
         });
