@@ -336,3 +336,62 @@ impl From<ChatRequestBuilder> for String {
         serde_json::to_string(&request.build()).unwrap()
     }
 }
+
+#[derive(Debug, Serialize)]
+pub struct EmbeddingsRequest {
+    pub model: String,
+    pub prompt: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub options: Option<serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub keep_alive: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct EmbeddingsResponse {
+    pub embedding: Vec<f32>,
+}
+
+
+pub struct EmbeddingsRequestBuilder {
+    model: String,
+    prompt: String,
+    options: Option<Value>,
+    keep_alive: Option<String>,
+}
+
+impl EmbeddingsRequestBuilder {
+    pub fn new(model: String, prompt: String) -> Self {
+        Self {
+            model,
+            prompt,
+            options: None,
+            keep_alive: None,
+        }
+    }
+
+    pub fn options(mut self, options: Value) -> Self {
+        self.options = Some(options);
+        self
+    }
+
+    pub fn keep_alive(mut self, keep_alive: String) -> Self {
+        self.keep_alive = Some(keep_alive);
+        self
+    }
+
+    pub fn build(self) -> EmbeddingsRequest {
+        EmbeddingsRequest {
+            model: self.model,
+            prompt: self.prompt,
+            options: self.options,
+            keep_alive: self.keep_alive,
+        }
+    }
+}
+
+impl From<EmbeddingsRequestBuilder> for String {
+    fn from(request: EmbeddingsRequestBuilder) -> Self {
+        serde_json::to_string(&request.build()).unwrap()
+    }
+}

@@ -39,7 +39,6 @@ async fn demo_claude_multimedia() {
 }
 
 // Test
-// Test
 #[cfg(test)]
 mod tests {
     use super::*;
