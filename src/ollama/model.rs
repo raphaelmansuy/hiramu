@@ -1,36 +1,4 @@
-//! This module defines the data structures and builders for interacting with the Ollama API.
-//!
-//! The main components of this module are:
-//! - `GenerateRequest` and `GenerateRequestBuilder`: Represents a request to generate text using the Ollama API.
-//! - `GenerateResponse`: Represents a response from the Ollama API for a generate request.
-//! - `ChatRequest` and `ChatRequestBuilder`: Represents a request to initiate a chat session with the Ollama API.
-//! - `ChatResponse`: Represents a response from the Ollama API for a chat request.
-//! - `Message`: Represents a message in a chat session, containing the role and content.
-//!
-//! The module provides a convenient way to construct requests using the builder pattern and
-//! deserialize responses from the Ollama API.
-//!
-//! Example usage:
-//!
-//! ```
-//! use ollama::model::{GenerateRequestBuilder, ChatRequestBuilder, Message};
-//!
-//! // Create a generate request
-//! let generate_request = GenerateRequestBuilder::new("model_id".to_string())
-//!     .prompt("Hello, how are you?".to_string())
-//!     .build();
-//!
-//! // Create a chat request
-//! let chat_request = ChatRequestBuilder::new("model_id".to_string())
-//!     .messages(vec![
-//!         Message {
-//!             role: "user".to_string(),
-//!             content: "Hello, how are you?".to_string(),
-//!             images: vec![],
-//!         },
-//!     ])
-//!     .build();
-//! ```
+
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 use serde_json::Value;
