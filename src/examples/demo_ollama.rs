@@ -3,14 +3,15 @@ use std::u32;
 
 use futures::stream::TryStream;
 use futures_util::TryStreamExt;
-use super::super::ollama::model::{ChatRequestBuilder, ChatResponse, GenerateRequestBuilder, GenerateResponse, Message};
-use super::super::ollama::ollama_client::{FetchStreamError, OllamaClient};
+
+use crate::ollama::{ChatRequestBuilder, ChatResponse, Message, OllamaError};
+use crate::{GenerateRequestBuilder, GenerateResponse, OllamaClient};
 
 pub async fn chat_response_loop(max_loop: u32) {
     let client = OllamaClient::new("http://localhost:11434".to_string());
 
     let mut messages = Vec::new();
-    let mut counter = 0; 
+    let mut counter = 0;
 
     loop {
         let input = prompt_input("\nUser: ").unwrap();
@@ -77,9 +78,9 @@ fn prompt_input(prompt: &str) -> Result<String, std::io::Error> {
 }
 
 async fn process_and_collect_chat_response<F>(
-    response: impl TryStream<Ok = ChatResponse, Error = FetchStreamError>,
+    response: impl TryStream<Ok = ChatResponse, Error = OllamaError>,
     callback: F,
-) -> Result<String, FetchStreamError>
+) -> Result<String, OllamaError>
 where
     F: Fn(&str) + Send + Sync + 'static,
 {
@@ -97,8 +98,8 @@ where
 }
 
 pub async fn print_generate_response(
-    response: impl TryStream<Ok = GenerateResponse, Error = FetchStreamError>,
-) -> Result<(), FetchStreamError> {
+    response: impl TryStream<Ok = GenerateResponse, Error = OllamaError>,
+) -> Result<(), OllamaError> {
     response
         .try_for_each(|chunk| async {
             let response = chunk.response;
@@ -110,19 +111,19 @@ pub async fn print_generate_response(
         .await
 }
 
-
 // Create a test
 
 #[cfg(test)]
 mod tests {
+    use super::*;
 
     #[tokio::test]
     async fn test_chat_response_loop() {
-       // chat_response_loop(1).await;
+        // chat_response_loop(1).await;
     }
 
     #[tokio::test]
     async fn test_generate_response_loop() {
-//        generate_response_loop(1).await;
+        //      generate_response_loop(1).await;
     }
 }

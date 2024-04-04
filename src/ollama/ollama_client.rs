@@ -4,9 +4,9 @@ use reqwest::{Client, RequestBuilder};
 use serde::de::DeserializeOwned;
 use futures::stream::TryStream;
 
-use crate::error::HiramuError;
+use super::error::OllamaError;
 
-pub type FetchStreamError = HiramuError;
+
 /// Represents a client for interacting with the Ollama API.
 ///
 /// This struct encapsulates the HTTP client and the base URL for the Ollama API.
@@ -58,7 +58,7 @@ pub struct OllamaClient {
 ///     fetch_stream(request).await?;
 /// async_stream::try_collect::<Vec<_>, _>(stream).await?;
 /// ```
-async fn fetch_stream<T>(request: RequestBuilder) -> Result<impl TryStream<Ok = T, Error = FetchStreamError>, FetchStreamError>
+async fn fetch_stream<T>(request: RequestBuilder) -> Result<impl TryStream<Ok = T, Error = OllamaError>, OllamaError>
 where
     T: DeserializeOwned,
 { 
@@ -68,14 +68,15 @@ where
     let body = response.bytes_stream();
 
     if status.is_success() {
-        Ok(body.map_err(|e|   FetchStreamError::from(e)).and_then(|chunk| {
+        Ok(body.map_err(|e|   OllamaError::from(e)).and_then(|chunk| {
             async move {
-                let chunk = serde_json::from_slice(&chunk).map_err(|e| FetchStreamError::from(e))?;
+                let chunk = serde_json::from_slice(&chunk).map_err(|e| OllamaError::from(e))?;
                 Ok(chunk)
             }
         }))
     } else {
-        Err(FetchStreamError::InvalidResponse(format!("HTTP error: {}", status)))
+        let message = "Failed to fetch data Http status code: ".to_string() + &status.as_str();
+        Err(OllamaError::ApiError(message))
     }
 }
 
@@ -130,7 +131,7 @@ impl OllamaClient {
     pub async fn generate(
         &self,
         request: GenerateRequest,
-    ) -> Result<impl TryStream<Ok = GenerateResponse, Error = FetchStreamError>, FetchStreamError> {
+    ) -> Result<impl TryStream<Ok = GenerateResponse, Error = OllamaError>, OllamaError> {
         let url = format!("{}/api/generate", self.base_url);
 
         
@@ -172,7 +173,7 @@ impl OllamaClient {
     pub async fn chat(
         &self,
         request: ChatRequest,
-    ) -> Result<impl TryStream<Ok = ChatResponse, Error = FetchStreamError>, FetchStreamError> {
+    ) -> Result<impl TryStream<Ok = ChatResponse, Error = OllamaError>, OllamaError> {
         let url = format!("{}/api/chat", self.base_url);
 
         let request = self.client.post(&url).json(&request);
