@@ -1,7 +1,7 @@
 use crate::bedrock::error::BedrockError;
 use aws_config::Region;
 use aws_sdk_bedrock::config::BehaviorVersion;
-use aws_sdk_bedrockruntime::{Client, Error};
+use aws_sdk_bedrockruntime::Client;
 use futures::stream::Stream;
 use serde_json::Value;
 use std::borrow::Cow;
@@ -209,7 +209,11 @@ impl BedrockClient {
     ///
     /// This function returns a `Result` that contains a response if the operation was successful,
     /// or an error if the operation failed.
-    pub async fn generate_raw(&self, model_id: String, payload: Value) -> Result<Value, Error> {
+    pub async fn generate_raw(
+        &self,
+        model_id: String,
+        payload: Value,
+    ) -> Result<Value, BedrockError> {
         let payload_bytes = serde_json::to_vec(&payload).unwrap();
         let payload_blob = aws_smithy_types::Blob::new(payload_bytes);
 
@@ -222,7 +226,12 @@ impl BedrockClient {
             .content_type("application/json")
             .body(payload_blob)
             .send()
-            .await?;
+            .await;
+
+        let resp = match resp {
+            Ok(resp) => resp,
+            Err(err) => return Err(BedrockError::from(err)),
+        };
 
         let response: serde_json::Value = serde_json::from_slice(resp.body().as_ref()).unwrap();
         Ok(response)

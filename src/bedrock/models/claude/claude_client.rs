@@ -1,8 +1,8 @@
 use crate::bedrock::bedrock_client::{BedrockClient, BedrockClientOptions};
-use crate::bedrock::models::claude::claude_error::ClaudeError;
 use crate::bedrock::models::claude::claude_request_message::{
     ChatOptions, ConversationRequest, ConversationResponse, StreamResult,
 };
+use crate::bedrock::models::claude::error::ClaudeError;
 use futures::stream::Stream;
 use futures::TryStreamExt;
 
@@ -39,7 +39,7 @@ impl ClaudeClient {
                 let conversation_response = serde_json::from_value(response).unwrap();
                 Ok(conversation_response)
             }
-            Err(err) => Err(ClaudeError::Unknown(err.to_string())),
+            Err(err) => Err(ClaudeError::from(err)),
         }
     }
 
@@ -58,10 +58,9 @@ impl ClaudeClient {
 
         let response = self.client.generate_raw_stream(model_id, payload).await;
 
-
         let response = match response {
             Ok(response) => response,
-            Err(err) => return Err(ClaudeError::Unknown(err.to_string())),
+            Err(err) => return Err(ClaudeError::from(err)),
         };
 
         Ok(response

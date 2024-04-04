@@ -5,7 +5,7 @@ use futures::stream::TryStream;
 use futures_util::TryStreamExt;
 
 use crate::ollama::{ChatRequestBuilder, ChatResponse, Message, OllamaError};
-use crate::{GenerateRequestBuilder, GenerateResponse, OllamaClient};
+use crate::ollama::{GenerateRequestBuilder, GenerateResponse, OllamaClient};
 
 pub async fn chat_response_loop(max_loop: u32) {
     let client = OllamaClient::new("http://localhost:11434".to_string());

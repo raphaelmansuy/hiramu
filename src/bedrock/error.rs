@@ -1,3 +1,4 @@
+use aws_sdk_bedrockruntime::operation::invoke_model::InvokeModelError;
 use serde_json::Error as SerdeJsonError;
 use thiserror::Error;
 
@@ -31,6 +32,9 @@ pub enum BedrockError {
 
     #[error("AWS SDK invoke model error: {0}")]
     AwsSdkErrorInvoke(#[from] SdkError<InvokeModelWithResponseStreamError>),
+
+    #[error("AWS SDK invoke model error: {0}")]
+    AwsSdkErrorInvokeModel(#[from] SdkError<InvokeModelError>),
 
     #[error("Unknown error: {0}")]
     Unknown(String),
