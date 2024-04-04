@@ -1,14 +1,14 @@
 use futures_util::stream::TryStream; 
 use futures_util::stream::TryStreamExt;
-use hiramu::ollama::model::GenerateRequestBuilder;
-use hiramu::ollama::model::GenerateResponse; 
-use hiramu::ollama::ollama_client::FetchStreamError;
-use hiramu::ollama::ollama_client::OllamaClient;
+use hiramu::ollama::GenerateRequestBuilder;
+use hiramu::ollama::GenerateResponse; 
+use hiramu::ollama::OllamaClient;
+use hiramu::ollama::OllamaError;
 use hiramu::util::fetch_and_base64_encode_image;
 use std::io::{self, Write}; 
 
 async fn display_response(
-    response_stream: impl TryStream<Ok = GenerateResponse, Error = FetchStreamError>,
+    response_stream: impl TryStream<Ok = GenerateResponse, Error = OllamaError>,
 ) {
     response_stream
         .try_for_each(|response| async {
