@@ -173,6 +173,7 @@ impl BedrockClient {
                                 }
                             }
                             Err(err) => {
+                                println!("Error: {:?}", err);
                                 sender
                                     .send(Err(BedrockError::ApiError(err.to_string())))
                                     .unwrap();

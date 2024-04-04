@@ -58,6 +58,7 @@ impl ClaudeClient {
 
         let response = self.client.generate_raw_stream(model_id, payload).await;
 
+
         let response = match response {
             Ok(response) => response,
             Err(err) => return Err(ClaudeError::ApiError(err.to_string())),

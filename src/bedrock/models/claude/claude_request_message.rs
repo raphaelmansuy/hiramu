@@ -1,5 +1,4 @@
-use serde::{ Deserialize, Serialize};
-
+use serde::{Deserialize, Serialize};
 
 pub struct ChatOptions {
     pub model_id: String,
@@ -72,12 +71,6 @@ pub enum Role {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Message {
-    pub role: Role,
-    pub content: MessageContent,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum MessageContent {
     Text(String),
@@ -85,10 +78,26 @@ pub enum MessageContent {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ContentBlock {
+pub struct Message {
+    pub role: Role,
+    pub content: MessageContent,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum ContentBlock {
+    #[serde(rename = "text")]
+    Text { text: String },
+    #[serde(rename = "image")]
+    Image { source: ImageSource },
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ImageSource {
     #[serde(rename = "type")]
-    pub block_type: String,
-    pub text: String,
+    pub source_type: String,
+    pub media_type: String,
+    pub data: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -124,6 +133,24 @@ impl Message {
             content: content.into(),
         }
     }
+
+    pub fn new_user_message_with_image(text: &String, image: &String, mime_type: &String) -> Self {
+        let image_block = ContentBlock::Image {
+            source: ImageSource {
+                source_type: "base64".to_string(),
+                media_type: mime_type.to_string(),
+                data: image.to_string(),
+            },
+        };
+
+        let text_block = ContentBlock::Text { text: text.to_string() };
+
+
+        Message {
+            role: Role::User,
+            content: MessageContent::Blocks(vec![text_block, image_block]),
+        }
+    }
 }
 
 impl From<String> for MessageContent {
@@ -155,17 +182,10 @@ pub struct ConversationResponse {
     #[serde(rename = "type")]
     pub response_type: String,
     pub role: Role,
-    pub content: Vec<ResponseContentBlock>,
+    pub content: Vec<ContentBlock>,
     pub stop_reason: StopReason,
     pub stop_sequence: Option<String>,
     pub usage: UsageInfo,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ResponseContentBlock {
-    #[serde(rename = "type")]
-    pub block_type: String,
-    pub text: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -174,23 +194,18 @@ pub struct UsageInfo {
     pub output_tokens: i32,
 }
 
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct StreamResult {
     #[serde(rename = "type")]
     pub result_type: String,
     #[serde(flatten)]
-    pub data: serde_json::Value, // Temporarily hold the data as a serde_json::Value
+    pub data: serde_json::Value,
 }
-
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MessageStart {
     pub message: Message,
 }
-
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Usage {
@@ -203,7 +218,6 @@ pub struct ContentBlockStart {
     pub content_block: ContentBlock,
     pub index: i32,
 }
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ContentBlockDelta {
@@ -268,6 +282,7 @@ pub struct StreamMessage {
     #[serde(rename = "type")]
     message_type: String,
 }
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct StreamMessageContent {
     content: Vec<serde_json::Value>,
@@ -294,6 +309,7 @@ pub struct StreamContentBlock {
     #[serde(rename = "type")]
     block_type: String,
 }
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct StreamContentBlockContent {
     text: String,
@@ -309,8 +325,8 @@ pub struct StreamContentBlockDelta {
     delta_type: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)
-]pub struct StreamDelta {
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StreamDelta {
     text: String,
     #[serde(rename = "type")]
     delta_type: String,
@@ -345,7 +361,6 @@ pub struct StreamInvocationMetrics {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct StreamInvocationMetricsContent {
-    
     #[serde(rename = "firstByteLatency")]
     first_byte_latency: u32,
     #[serde(rename = "inputTokenCount")]
@@ -355,7 +370,6 @@ pub struct StreamInvocationMetricsContent {
     #[serde(rename = "outputTokenCount")]
     output_token_count: u32,
 }
-
 
 #[cfg(test)]
 mod tests {
