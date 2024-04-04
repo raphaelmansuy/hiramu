@@ -231,6 +231,32 @@ async fn main() {
 }
 ```
 
+Here's a paragraph explaining how to use Embeddings in the Ollama Rust library for a README.md file:
+
+## Embeddings
+
+The Ollama library provides functionality to generate embeddings for a given text prompt. Embeddings are dense vector representations of text that capture semantic meaning and can be used for various downstream tasks such as semantic search, clustering, and classification. To generate embeddings, you can use the `OllamaClient::embeddings` method. First, create an instance of `EmbeddingsRequestBuilder` by providing the model name and the text prompt. Optionally, you can specify additional options and a keep-alive duration. Then, call the `build` method to create an `EmbeddingsRequest` and pass it to the `embeddings` method of the `OllamaClient`. The method returns an `EmbeddingsResponse` containing the generated embedding as a vector of floating-point values. Here's an example:
+
+```rust
+use ollama::{OllamaClient, EmbeddingsRequestBuilder};
+
+let client = OllamaClient::new("http://localhost:11434".to_string());
+let request = EmbeddingsRequestBuilder::new(
+    "nomic-embed-text".to_string(),
+    "Here is an article about llamas...".to_string(),
+)
+.options(serde_json::json!({ "temperature": 0.8 }))
+.keep_alive("10m".to_string())
+.build();
+
+let response = client.embeddings(request).await.unwrap();
+println!("Embeddings: {:?}", response.embedding);
+```
+
+This code snippet demonstrates how to create an `EmbeddingsRequestBuilder`, set the model name, prompt, options, and keep-alive duration, and then build the request. The `embeddings` method is called with the request, and the resulting `EmbeddingsResponse` contains the generated embedding.
+
+
+
 
 ## Contributing
 
