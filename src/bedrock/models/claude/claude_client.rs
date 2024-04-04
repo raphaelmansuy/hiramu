@@ -61,7 +61,7 @@ impl ClaudeClient {
 
         let response = match response {
             Ok(response) => response,
-            Err(err) => return Err(ClaudeError::ApiError(err.to_string())),
+            Err(err) => return Err(ClaudeError::Unknown(err.to_string())),
         };
 
         Ok(response
