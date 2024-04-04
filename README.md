@@ -272,7 +272,7 @@ To contribute to the project, follow these steps:
 
 ## License
 
-Hiramu is licensed under the [MIT License](LICENSE.md).
+Hiramu is licensed under the [MIT License](./LICENSE.md).
 
 ## Acknowledgements
 
