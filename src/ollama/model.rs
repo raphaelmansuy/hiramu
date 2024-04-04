@@ -36,7 +36,7 @@ use std::convert::TryFrom;
 use serde_json::Value;
 use pin_project::pin_project;
 
-use super::OllamaError;
+use super::error::OllamaError;
 
 /// Represents a request to generate text using the Ollama API.
 #[derive(Debug, Serialize, Clone)]
