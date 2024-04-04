@@ -238,7 +238,7 @@
 //!
 //! ## Contributing
 //!
-//! Contributions to Hiramu are welcome! If you encounter any issues, have suggestions for improvements, or want to add new features, please open an issue or submit a pull request on the [GitHub repository](https://github.com/your/repository).
+//! Contributions to Hiramu are welcome! If you encounter any issues, have suggestions for improvements, or want to add new features, please open an issue or submit a pull request on the [GitHub repository](https://github.com/raphaelmansuy/hiramu).
 //!
 //! To contribute to the project, follow these steps:
 //!
