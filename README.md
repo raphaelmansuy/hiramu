@@ -1,16 +1,18 @@
 # Hiramu
 
-Hiramu is a powerful and flexible Rust library that provides a high-level interface for interacting with various AI models and APIs, including Ollama and Bedrock. It simplifies the process of generating text, engaging in chat conversations, and working with different AI models.
+Hiramu is a powerful and flexible Rust library that provides a high-level interface for interacting with various AI models and APIs, including Ollama and AWS Bedrock. 
+
+It simplifies the process of generating text, engaging in chat conversations, and working with different AI models.
 
 ## Features
 
 - Easy-to-use interfaces for generating text and engaging in chat conversations with AI models
 - Support for Ollama and Bedrock AI services
+- Convenient interface for Claude and Mistral for AWS Bedrock
 - Asynchronous and streaming responses for efficient handling of large outputs
 - Customizable options for fine-tuning the behavior of AI models
 - Comprehensive error handling and informative error messages
 - Well-documented code with examples and explanations
-
 
 ## Getting Started
 
@@ -18,20 +20,74 @@ To start using Hiramu in your Rust project, add the following to your `Cargo.tom
 
 ```toml
 [dependencies]
-hiramu = "0.1.X"
-```
-
-Then, import the necessary modules and types in your Rust code:
-
-```rust
-use hiramu::ollama::ollama_client::OllamaClient;
-use hiramu::ollama::model::{GenerateRequest, GenerateRequestBuilder, GenerateResponse};
-use hiramu::bedrock::bedrock_client::{BedrockClient, BedrockClientOptions};
-use hiramu::bedrock::models::claude::claude_client::{ClaudeClient, ClaudeOptions};
-use hiramu::bedrock::models::claude::claude_request_message::{ChatOptions, ConversationRequest, Message};
+hiramu = "0.1.7"
 ```
 
 ## Examples
+
+### Generating Text with Mistral
+
+```rust
+use hiramu::bedrock::models::mistral::mistral_client::{MistralClient, MistralOptions};
+use hiramu::bedrock::models::mistral::mistral_request_message::MistralRequestBuilder;
+use hiramu::bedrock::model_info::{ModelInfo, ModelName};
+
+#[tokio::main]
+async fn main() {
+    let mistral_options = MistralOptions::new()
+        .profile_name("bedrock")
+        .region("us-west-2");
+
+    let client = MistralClient::new(mistral_options).await;
+
+    let request = MistralRequestBuilder::new("<s>[INST] What is the capital of France?[/INST]".to_string())
+        .max_tokens(200)
+        .temperature(0.8)
+        .build();
+
+    let model_id = ModelInfo::from_model_name(ModelName::MistralMixtral8X7BInstruct0x);
+    let response = client.generate(model_id, &request).await.unwrap();
+
+    println!("Response: {:?}", response.outputs.text);
+}
+```
+
+### Streaming Text Generation with Mistral
+
+```rust
+use futures::stream::StreamExt;
+use hiramu::bedrock::models::mistral::mistral_client::{MistralClient, MistralOptions};
+use hiramu::bedrock::models::mistral::mistral_request_message::MistralRequestBuilder;
+use hiramu::bedrock::model_info::{ModelInfo, ModelName};
+
+#[tokio::main]
+async fn main() {
+    let mistral_options = MistralOptions::new()
+        .profile_name("bedrock")
+        .region("us-west-2");
+
+    let client = MistralClient::new(mistral_options).await;
+
+    let request = MistralRequestBuilder::new("<s>[INST] What is the capital of France?[/INST]".to_string())
+        .max_tokens(200)
+        .temperature(0.8)
+        .build();
+
+    let model_id = ModelInfo::from_model_name(ModelName::MistralMixtral8X7BInstruct0x);
+    let mut stream = client.generate_with_stream(model_id, &request).await.unwrap();
+
+    while let Some(result) = stream.next().await {
+        match result {
+            Ok(response) => {
+                println!("Response: {:?}", response.outputs.text);
+            }
+            Err(err) => {
+                eprintln!("Error: {:?}", err);
+            }
+        }
+    }
+}
+```
 
 ### Generating Text with Ollama
 
@@ -63,6 +119,7 @@ async fn main() {
 ```rust
 use hiramu::bedrock::models::claude::claude_client::{ClaudeClient, ClaudeOptions};
 use hiramu::bedrock::models::claude::claude_request_message::{ChatOptions, ConversationRequest, Message};
+use hiramu::bedrock::model_info::{ModelInfo, ModelName};
 
 #[tokio::main]
 async fn main() {
@@ -79,7 +136,8 @@ async fn main() {
 
     let chat_options = ChatOptions::default()
         .with_temperature(0.7)
-        .with_max_tokens(100);
+        .with_max_tokens(100)
+        .with_model_id(ModelInfo::from_model_name(ModelName::AnthropicClaudeHaiku1x));
 
     let response_stream = client
         .chat_with_stream(&conversation_request, &chat_options)
@@ -231,32 +289,21 @@ async fn main() {
 }
 ```
 
-Here's a paragraph explaining how to use Embeddings in the Ollama Rust library for a README.md file:
+## Examples
 
-## Embeddings
+Here is a table with a description for each example:
 
-The Ollama library provides functionality to generate embeddings for a given text prompt. Embeddings are dense vector representations of text that capture semantic meaning and can be used for various downstream tasks such as semantic search, clustering, and classification. To generate embeddings, you can use the `OllamaClient::embeddings` method. First, create an instance of `EmbeddingsRequestBuilder` by providing the model name and the text prompt. Optionally, you can specify additional options and a keep-alive duration. Then, call the `build` method to create an `EmbeddingsRequest` and pass it to the `embeddings` method of the `OllamaClient`. The method returns an `EmbeddingsResponse` containing the generated embedding as a vector of floating-point values. Here's an example:
-
-```rust
-use ollama::{OllamaClient, EmbeddingsRequestBuilder};
-
-let client = OllamaClient::new("http://localhost:11434".to_string());
-let request = EmbeddingsRequestBuilder::new(
-    "nomic-embed-text".to_string(),
-    "Here is an article about llamas...".to_string(),
-)
-.options(serde_json::json!({ "temperature": 0.8 }))
-.keep_alive("10m".to_string())
-.build();
-
-let response = client.embeddings(request).await.unwrap();
-println!("Embeddings: {:?}", response.embedding);
-```
-
-This code snippet demonstrates how to create an `EmbeddingsRequestBuilder`, set the model name, prompt, options, and keep-alive duration, and then build the request. The `embeddings` method is called with the request, and the resulting `EmbeddingsResponse` contains the generated embedding.
-
-
-
+| Example | Path | Description |
+|---------|------|--------------|
+| `demo_ollama` | [src/examples/demo_ollama.rs](src/examples/demo_ollama.rs) | A simple example that demonstrates how to use the Ollama API to generate responses to chat messages. |
+| `demo_bedrock_raw_generate` | [src/examples/demo_bedrock_raw_generate.rs](src/examples/demo_bedrock_raw_generate.rs) | Demonstrates how to generate a raw response from the Bedrock service using the `generate_raw` method. |
+| `demo_bedrock_raw_stream` | [src/examples/demo_bedrock_raw_stream.rs](src/examples/demo_bedrock_raw_stream.rs) | Demonstrates how to generate a raw stream of responses from the Bedrock service using the `generate_raw_stream` method. |
+| `demo_bedrock_raw_mistral` | [src/examples/demo_bedrock_raw_mistral.rs](src/examples/demo_bedrock_raw_mistral.rs) | Demonstrates how to generate a raw stream of responses from the Mistral model in the Bedrock service. |
+| `demo_claude_chat` | [src/examples/demo_claude_chat.rs](src/examples/demo_claude_chat.rs) | Demonstrates how to use the Claude model in the Bedrock service to generate a chat response. |
+| `demo_claude_chat_stream` | [src/examples/demo_claude_chat_stream.rs](src/examples/demo_claude_chat_stream.rs) | Demonstrates how to use the Claude model in the Bedrock service to generate a stream of chat responses. |
+| `demo_claude_multimedia` | [src/examples/demo_claude_multimedia.rs](src/examples/demo_claude_multimedia.rs) | Demonstrates how to use the Claude model in the Bedrock service to generate a response based on text and an image. |
+| `demo_ollama_embedding` | [src/examples/demo_ollama_embedding.rs](src/examples/demo_ollama_embedding.rs) | Demonstrates how to use the Ollama API to generate text embeddings. |
+| `demo_mistral_stream` | [src/examples/demo_mistral_stream.rs](src/examples/demo_mistral_stream.rs) | Demonstrates how to use the Mistral model in the Bedrock service to generate a stream of responses. 
 
 ## Contributing
 
@@ -272,13 +319,14 @@ To contribute to the project, follow these steps:
 
 ## License
 
-Hiramu is licensed under the [MIT License].
+Hiramu is licensed under the [MIT License](./LICENCE).
 
 ## Acknowledgements
 
 Hiramu is built on top of the following libraries and APIs:
 
 - [Ollama](https://ollama.com/)
+- [Bedrock](https://bedrock.com/)
 - [reqwest](https://docs.rs/reqwest)
 - [tokio](https://tokio.rs/)
 - [serde](https://serde.rs/)

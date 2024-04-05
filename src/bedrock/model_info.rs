@@ -19,6 +19,7 @@ pub enum ModelName {
     MetaLlama2Chat70B1x,
     MistralMistral7BInstruct0x,
     MistralMixtral8X7BInstruct0x,
+    MistralLarge,
     StabilityStableDiffusionXL0x,
     StabilityStableDiffusionXL1x,
 }
@@ -106,6 +107,10 @@ impl ModelInfo {
         ModelInfo {
             name: ModelName::MistralMixtral8X7BInstruct0x,
             text: "mistral.mixtral-8x7b-instruct-v0:1",
+        },
+        ModelInfo {
+            name: ModelName::MistralLarge,
+            text: "mistral.mistral-large-2402-v1:0",
         },
         ModelInfo {
             name: ModelName::StabilityStableDiffusionXL0x,
