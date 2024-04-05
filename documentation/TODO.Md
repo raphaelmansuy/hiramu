@@ -2,7 +2,7 @@
 
 [X] - Implement Bedrock Client
 [X] - Implement Bedrock MultiModal in Chat, Image support
-[ ] - Add support to embedding models with Ollama
+[X] - Add support to embedding models with Ollama
 [ ] - Add support to embedding models with Bedrocks
 [ ] - Add more Tests and examples
 [ ] - Expose the Library for Python / NodeJs
