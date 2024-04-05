@@ -326,7 +326,7 @@ Hiramu is licensed under the [MIT License](./LICENCE).
 Hiramu is built on top of the following libraries and APIs:
 
 - [Ollama](https://ollama.com/)
-- [Bedrock](https://bedrock.com/)
+- [AWS Bedrock API](https://aws.amazon.com/bedrock/)
 - [reqwest](https://docs.rs/reqwest)
 - [tokio](https://tokio.rs/)
 - [serde](https://serde.rs/)
