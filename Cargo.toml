@@ -1,11 +1,11 @@
 [package]
 name = "hiramu"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
 license = "MIT"
-description = "A Rust AI Engineering Toolbox"
+description = "A Rust AI Engineering Toolbox to Access Ollama, AWS Bedrock"
 repository = "https://github.com/raphaelmansuy/hiramu"
-keywords = ["api", "client", "async"]
+keywords = ["api", "client", "async","aws bedrock", "ollama"]
 
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

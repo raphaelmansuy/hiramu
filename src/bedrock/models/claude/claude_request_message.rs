@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use super::ClaudeError;
+
 pub struct ChatOptions {
     pub model_id: String,
     pub temperature: Option<f32>,
@@ -200,6 +202,17 @@ pub struct StreamResult {
     pub result_type: String,
     #[serde(flatten)]
     pub data: serde_json::Value,
+}
+
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum StreamResultData {
+    MessageStart(MessageStart),
+    ContentBlockStart(ContentBlockStart),
+    ContentBlockDelta(ContentBlockDelta),
+    ContentBlockStop(ContentBlockStop),
+    MessageDelta(MessageDelta),
+    MessageStop(MessageStop),
 }
 
 #[derive(Debug, Serialize, Deserialize)]

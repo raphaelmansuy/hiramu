@@ -23,4 +23,7 @@ pub enum ClaudeError {
 
     #[error("Unknown error: {0}")]
     Unknown(String),
+
+    #[error("Deserialization error: {0}")]
+    Deserialization(String),
 }
