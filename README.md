@@ -20,7 +20,7 @@ To start using Hiramu in your Rust project, add the following to your `Cargo.tom
 
 ```toml
 [dependencies]
-hiramu = "0.1.7"
+hiramu = "0.1.8"
 ```
 
 ## Examples
@@ -94,6 +94,7 @@ async fn main() {
 ```rust
 use hiramu::ollama::ollama_client::OllamaClient;
 use hiramu::ollama::model::{GenerateRequest, GenerateRequestBuilder};
+use futures::stream::TryStreamExt;
 
 #[tokio::main]
 async fn main() {
@@ -132,7 +133,7 @@ async fn main() {
     let mut conversation_request = ConversationRequest::default();
     conversation_request
         .messages
-        .push(Message::new_user_message("Hello, Claude!"));
+        .push(Message::new_user_message("Hello, Claude!".to_owned()));
 
     let chat_options = ChatOptions::default()
         .with_temperature(0.7)
