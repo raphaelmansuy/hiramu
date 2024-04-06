@@ -5,7 +5,7 @@ edition = "2021"
 license = "MIT"
 description = "A Rust AI Engineering Toolbox to Access Ollama, AWS Bedrock"
 repository = "https://github.com/raphaelmansuy/hiramu"
-keywords = ["api", "client", "async","aws bedrock", "ollama"]
+keywords = ["api", "client", "async","aws",  "bedrock", "ollama"]
 
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
