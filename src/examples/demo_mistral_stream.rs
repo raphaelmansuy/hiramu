@@ -1,6 +1,5 @@
 use futures::TryStreamExt;
 
-use crate::bedrock::model_info::{ModelInfo, ModelName};
 use crate::bedrock::models::mistral::MistralClient;
 use crate::bedrock::models::mistral::MistralOptions;
 use crate::bedrock::models::mistral::MistralRequestBuilder;

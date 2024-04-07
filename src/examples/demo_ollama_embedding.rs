@@ -1,6 +1,6 @@
 use crate::ollama::{EmbeddingsRequestBuilder, OllamaClient};
 
-async fn demo_ollama_embedding() -> Result<(), Box<dyn std::error::Error>> {
+pub async fn demo_ollama_embedding() -> Result<(), Box<dyn std::error::Error>> {
     let client = OllamaClient::new("http://localhost:11434".to_string());
 
     let prompt = "The quick brown fox jumps over the lazy dog.";
