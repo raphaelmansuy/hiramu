@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-use super::ClaudeError;
 
 pub struct ChatOptions {
     pub model_id: String,
@@ -339,6 +338,7 @@ pub struct StreamContentBlockDelta {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+
 pub struct StreamDelta {
     text: String,
     #[serde(rename = "type")]

@@ -3,7 +3,7 @@ use futures::TryStreamExt;
 use crate::{bedrock::models::claude::{claude_client::{ClaudeClient, ClaudeOptions}, claude_request_message::{ChatOptions, ConversationRequest, Message}}, fetch_and_base64_encode_image};
 
 
-async fn demo_claude_multimedia() {
+pub async fn demo_claude_multimedia() {
     let claude_options = ClaudeOptions::new().profile_name("bedrock").region("us-west-2");
 
     let client = ClaudeClient::new(claude_options).await;

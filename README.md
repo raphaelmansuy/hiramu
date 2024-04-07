@@ -28,28 +28,29 @@ hiramu = "0.1.8"
 ### Generating Text with Mistral
 
 ```rust
+use hiramu::bedrock::model_info::{ModelInfo, ModelName};
 use hiramu::bedrock::models::mistral::mistral_client::{MistralClient, MistralOptions};
 use hiramu::bedrock::models::mistral::mistral_request_message::MistralRequestBuilder;
-use hiramu::bedrock::model_info::{ModelInfo, ModelName};
 
-#[tokio::main]
-async fn main() {
+async fn generating_text_with_mistral() {
     let mistral_options = MistralOptions::new()
         .profile_name("bedrock")
         .region("us-west-2");
 
     let client = MistralClient::new(mistral_options).await;
 
-    let request = MistralRequestBuilder::new("<s>[INST] What is the capital of France?[/INST]".to_string())
-        .max_tokens(200)
-        .temperature(0.8)
-        .build();
+    let request =
+        MistralRequestBuilder::new("<s>[INST] What is the capital of France?[/INST]".to_string())
+            .max_tokens(200)
+            .temperature(0.8)
+            .build();
 
     let model_id = ModelInfo::from_model_name(ModelName::MistralMixtral8X7BInstruct0x);
     let response = client.generate(model_id, &request).await.unwrap();
 
-    println!("Response: {:?}", response.outputs.text);
+    println!("Response: {:?}", response.outputs[0].text);
 }
+
 ```
 
 ### Streaming Text Generation with Mistral
@@ -60,8 +61,7 @@ use hiramu::bedrock::models::mistral::mistral_client::{MistralClient, MistralOpt
 use hiramu::bedrock::models::mistral::mistral_request_message::MistralRequestBuilder;
 use hiramu::bedrock::model_info::{ModelInfo, ModelName};
 
-#[tokio::main]
-async fn main() {
+pub async fn generating_text_with_mistral() {
     let mistral_options = MistralOptions::new()
         .profile_name("bedrock")
         .region("us-west-2");
@@ -79,7 +79,7 @@ async fn main() {
     while let Some(result) = stream.next().await {
         match result {
             Ok(response) => {
-                println!("Response: {:?}", response.outputs.text);
+                println!("Response: {:?}", response.outputs[0].text);
             }
             Err(err) => {
                 eprintln!("Error: {:?}", err);
@@ -92,12 +92,14 @@ async fn main() {
 ### Generating Text with Ollama
 
 ```rust
-use hiramu::ollama::ollama_client::OllamaClient;
-use hiramu::ollama::model::{GenerateRequest, GenerateRequestBuilder};
-use futures::stream::TryStreamExt;
+use std::io::Write;
 
-#[tokio::main]
-async fn main() {
+use futures::TryStreamExt;
+
+use hiramu::ollama::ollama_client::OllamaClient;
+use hiramu::ollama::model::{GenerateRequestBuilder};
+
+async fn generating_text_with_ollama() {
     let client = OllamaClient::new("http://localhost:11434".to_string());
     let request = GenerateRequestBuilder::new("mistral".to_string())
         .prompt("Once upon a time".to_string())
@@ -107,7 +109,8 @@ async fn main() {
 
     response_stream
         .try_for_each(|chunk| async move {
-            println!("{}", chunk.response);
+            print!("{}", chunk.response);
+            std::io::stdout().flush()?;
             Ok(())
         })
         .await
@@ -118,12 +121,17 @@ async fn main() {
 ### Chatting with Claude using Bedrock
 
 ```rust
-use hiramu::bedrock::models::claude::claude_client::{ClaudeClient, ClaudeOptions};
-use hiramu::bedrock::models::claude::claude_request_message::{ChatOptions, ConversationRequest, Message};
-use hiramu::bedrock::model_info::{ModelInfo, ModelName};
+use std::io::Write;
 
-#[tokio::main]
-async fn main() {
+use futures::TryStreamExt;
+
+use hiramu::bedrock::model_info::{ModelInfo, ModelName};
+use hiramu::bedrock::models::claude::claude_client::{ClaudeClient, ClaudeOptions};
+use hiramu::bedrock::models::claude::claude_request_message::{
+    ChatOptions, ContentBlockDelta, ConversationRequest, Message, StreamResultData,
+};
+
+pub async fn chat_with_claude() {
     let claude_options = ClaudeOptions::new()
         .profile_name("bedrock")
         .region("us-west-2");
@@ -138,7 +146,9 @@ async fn main() {
     let chat_options = ChatOptions::default()
         .with_temperature(0.7)
         .with_max_tokens(100)
-        .with_model_id(ModelInfo::from_model_name(ModelName::AnthropicClaudeHaiku1x));
+        .with_model_id(ModelInfo::from_model_name(
+            ModelName::AnthropicClaudeHaiku1x,
+        ));
 
     let response_stream = client
         .chat_with_stream(&conversation_request, &chat_options)
@@ -147,7 +157,19 @@ async fn main() {
 
     response_stream
         .try_for_each(|chunk| async move {
-            println!("{:?}", chunk);
+            match chunk {
+                StreamResultData::ContentBlockStart(..) => {
+                    println!("\n------------------------------");
+                }
+                StreamResultData::ContentBlockStop(..) => {
+                    println!("\n------------------------------");
+                }
+                StreamResultData::ContentBlockDelta(ContentBlockDelta { delta, .. }) => {
+                    print!("{}", delta.text);
+                    std::io::stdout().flush().unwrap();
+                }
+                _ => {}
+            }
             Ok(())
         })
         .await
@@ -155,15 +177,18 @@ async fn main() {
 }
 ```
 
-### Sending Images with Claude
+### Working with Images with Claude
 
 ```rust
+use std::io::Write;
+
+use futures::TryStreamExt;
+
 use hiramu::bedrock::models::claude::claude_client::{ClaudeClient, ClaudeOptions};
-use hiramu::bedrock::models::claude::claude_request_message::{ChatOptions, ConversationRequest, Message};
+use hiramu::bedrock::models::claude::claude_request_message::{ChatOptions, ContentBlockDelta, ConversationRequest, Message, StreamResultData};
 use hiramu::fetch_and_base64_encode_image;
 
-#[tokio::main]
-async fn main() {
+async fn image_with_claude() {
     let claude_options = ClaudeOptions::new()
         .profile_name("bedrock")
         .region("us-west-2");
@@ -189,14 +214,28 @@ async fn main() {
         .await
         .unwrap();
 
-    response_stream
+        response_stream
         .try_for_each(|chunk| async move {
-            println!("{:?}", chunk);
+            match chunk {
+                StreamResultData::ContentBlockStart(..) => {
+                    println!("\n------------------------------");
+                }
+                StreamResultData::ContentBlockStop(..) => {
+                    println!("\n------------------------------");
+                }
+
+                StreamResultData::ContentBlockDelta(ContentBlockDelta { delta, .. }) => {
+                    print!("{}", delta.text);
+                    std::io::stdout().flush().unwrap();
+                }
+                _ => {}
+            }
             Ok(())
         })
         .await
         .unwrap();
 }
+
 ```
 
 ### Using the Raw Bedrock API
@@ -287,6 +326,35 @@ async fn main() {
         })
         .await
         .unwrap();
+}
+```
+
+## Using Embeddings with Ollama
+
+```rust
+use hiramu::ollama::{EmbeddingsRequestBuilder, OllamaClient};
+
+pub async fn demo_ollama_embedding() -> Result<(), Box<dyn std::error::Error>> {
+    let client = OllamaClient::new("http://localhost:11434".to_string());
+
+    let prompt = "The quick brown fox jumps over the lazy dog.";
+
+    let request = EmbeddingsRequestBuilder::new("nomic-embed-text".to_string(), prompt.to_string())
+        .keep_alive("10m".to_string())
+        .build();
+
+    match client.embeddings(request).await {
+        Ok(response) => {
+            // Print embeddings dimensions
+            println!("Embeddings dimensions: {:?}", response.embedding.len());
+            println!("Embeddings: {:?}", response);
+        }
+        Err(error) => {
+            eprintln!("Error: {:?}", error);
+        }
+    }
+
+    Ok(())
 }
 ```
 
