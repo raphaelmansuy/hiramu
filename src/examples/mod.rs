@@ -1,3 +1,5 @@
+pub mod simple_examples;
+
 pub mod demo_ollama;
 pub mod demo_bedrock_raw_generate;
 pub mod demo_bedrock_raw_stream;

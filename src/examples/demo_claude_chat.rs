@@ -35,6 +35,7 @@ pub async fn demo_chat_claude() {
 
     match response {
         Ok(response) => {
+            println!("{:?}", response);
             let json_display = serde_json::to_string_pretty(&response).unwrap();
             println!("{:?}", json_display);
         }

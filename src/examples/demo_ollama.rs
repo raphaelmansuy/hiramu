@@ -118,7 +118,6 @@ pub async fn print_generate_response(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[tokio::test]
     async fn test_chat_response_loop() {

@@ -100,7 +100,7 @@ mod tests {
 
 
         let mut stream = client
-            .generate_with_stream("mistral.mistral-7b-instruct-v0:2".to_string(), &request)
+            .generate_with_stream(model_name.to_owned(), &request)
             .await
             .unwrap();
 
