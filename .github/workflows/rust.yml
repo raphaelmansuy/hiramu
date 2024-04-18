@@ -2,19 +2,70 @@ name: Rust
 
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    branches:
+      - main
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-
+  publish:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
-    - name: Build
-      run: cargo build --verbose
+
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+
+    - name: Get Version
+      id: get_version
+      run: echo ::set-output name=VERSION::$(grep '^version = ' Cargo.toml | sed 's/^version = //' | sed 's/"//g')
+
+    - name: Check if Version Tag Exists
+      id: check_tag
+      run: |
+        if git rev-parse "v${{ steps.get_version.outputs.VERSION }}" >/dev/null 2>&1; then
+          echo ::set-output name=EXISTS::true
+        else
+          echo ::set-output name=EXISTS::false
+        fi
+
+    - name: Create Version Tag
+      if: steps.check_tag.outputs.EXISTS == 'false'
+      run: |
+        git config --global user.name 'GitHub Actions'
+        git config --global user.email 'actions@github.com'
+        git tag -a "v${{ steps.get_version.outputs.VERSION }}" -m "Version ${{ steps.get_version.outputs.VERSION }}"
+        git push origin "v${{ steps.get_version.outputs.VERSION }}"
+
+    - name: Publish to crates.io
+      if: steps.check_tag.outputs.EXISTS == 'false'
+      uses: actions-rs/cargo@v1
+      with:
+        command: publish
+        args: --token ${{ secrets.CRATES_IO_TOKEN }}
+
+    - name: CreateRelease
+      if: steps.check_tag.outputs.EXISTS == 'false'
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.get_version.outputs.VERSION }}
+        release_name: Release v${{ steps.get_version.outputs.VERSION }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset
+      if: steps.check_tag.outputs.EXISTS == 'false'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./target/release/${{ github.event.repository.name }}
+        asset_name: ${{ github.event.repository.name }}
+        asset_content_type: application/octet-stream
