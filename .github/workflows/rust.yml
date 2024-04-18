@@ -41,6 +41,10 @@ jobs:
         git tag -a "v${{ steps.get_version.outputs.VERSION }}" -m "Version ${{ steps.get_version.outputs.VERSION }}"
         git push origin "v${{ steps.get_version.outputs.VERSION }}"
 
+    - name: Build Release Binary
+      if: steps.check_tag.outputs.EXISTS == 'false'
+      run: cargo build --release
+
     - name: Publish to crates.io
       if: steps.check_tag.outputs.EXISTS == 'false'
       uses: actions-rs/cargo@v1
