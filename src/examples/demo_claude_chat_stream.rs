@@ -28,7 +28,7 @@ pub async fn demo_chat_claude_with_stream() {
 
     let chat_options = ChatOptions::default()
         .with_model_id(ModelInfo::from_model_name(
-            ModelName::AnthropicClaudeHaiku1x,
+            ModelName::AnthropicClaudeOpus1x,
         ))
         .with_temperature(0.5);
 

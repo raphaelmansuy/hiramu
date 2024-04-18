@@ -1,6 +1,6 @@
 [package]
 name = "hiramu"
-version = "0.1.12"
+version = "0.1.13"
 edition = "2021"
 license = "MIT"
 description = "A Rust AI Engineering Toolbox to Access Ollama, AWS Bedrock"
