@@ -8,6 +8,7 @@ pub enum ModelName {
     AnthropicClaude2x,
     AnthropicClaudeSonnet1x,
     AnthropicClaudeHaiku1x,
+    AnthropicClaudeOpus1x,
     AnthropicClaudeInstantx,
     AI21JurassicMid1x,
     AI21JurassicUltra1x,
@@ -63,6 +64,10 @@ impl ModelInfo {
         ModelInfo {
             name: ModelName::AnthropicClaudeHaiku1x,
             text: "anthropic.claude-3-haiku-20240307-v1:0",
+        },
+        ModelInfo {
+            name: ModelName::AnthropicClaudeOpus1x,
+            text: "anthropic.claude-3-opus-20240229-v1:0",
         },
         ModelInfo {
             name: ModelName::AnthropicClaudeInstantx,
