@@ -20,7 +20,7 @@ To start using Hiramu in your Rust project, add the following to your `Cargo.tom
 
 ```toml
 [dependencies]
-hiramu = "0.1.8"
+hiramu = "0.1.14"
 ```
 
 ## Examples
