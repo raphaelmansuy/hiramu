@@ -63,6 +63,22 @@ impl TryFrom<&str> for GenerateResponse {
     }
 }
 
+fn merge_options(options: Option<Value>, builder_options: Option<Value>) -> Value {
+    match (options, builder_options) {
+        (Some(options), Some(options_builder)) => {
+            let mut merged_options = options.as_object().unwrap().clone();
+            let options_builder = options_builder.as_object().unwrap();
+            for (key, value) in options_builder {
+                merged_options.insert(key.clone(), value.clone());
+            }
+            serde_json::Value::Object(merged_options)
+        },
+        (Some(options), None) => options,
+        (None, Some(options_builder)) => options_builder,
+        (None, None) => serde_json::Value::Object(serde_json::Map::new()),
+    }
+}
+
 // Represents a builder for constructing a GenerateRequest.
 pub struct GenerateRequestBuilder {
     model: String,
@@ -76,6 +92,7 @@ pub struct GenerateRequestBuilder {
     stream: Option<bool>,
     raw: Option<bool>,
     keep_alive: Option<String>,
+    options_builder: Option<OptionsBuilder>
 }
 
 impl GenerateRequestBuilder {
@@ -94,6 +111,7 @@ impl GenerateRequestBuilder {
             stream: None,
             raw: None,
             keep_alive: None,
+            options_builder: None,
         }
     }
 
@@ -134,6 +152,13 @@ impl GenerateRequestBuilder {
         self
     }
 
+
+
+    pub fn options_from_builder(mut self, options_builder: OptionsBuilder) -> Self {
+        self.options = Some(serde_json::to_value(options_builder.build()).unwrap());
+        self
+    }
+    
     // Set the system field of the GenerateRequestBuilder.
     // This field is used to provide a system prompt for the generation process.
     // The value should be a string representing the system prompt.
@@ -187,19 +212,20 @@ impl GenerateRequestBuilder {
         self
     }
 
-    pub fn options_from_builder(mut self, options_builder: OptionsBuilder) -> Self {
-        self.options = Some(serde_json::to_value(options_builder.build()).unwrap());
-        self
-    }
+
 
     // Build the GenerateRequest struct from the builder.
     pub fn build(self) -> GenerateRequest {
+        let options = self.options_builder.map(|builder| builder.build());
+        let options = options.map(|options| serde_json::to_value(options).unwrap());
+        let merged_options = merge_options(self.options, options);
+
         GenerateRequest {
             model: self.model,
             prompt: self.prompt,
             images: self.images.unwrap_or_default(),
             format: self.format,
-            options: self.options,
+            options: Some(merged_options),
             system: self.system,
             template: self.template,
             context: self.context,
@@ -279,6 +305,7 @@ pub struct ChatRequestBuilder {
     template: Option<String>,
     stream: Option<bool>,
     keep_alive: Option<String>,
+    options_builder: Option<OptionsBuilder>,
 }
 
 impl ChatRequestBuilder {
@@ -291,6 +318,7 @@ impl ChatRequestBuilder {
             template: None,
             stream: None,
             keep_alive: None,
+            options_builder: None,
         }
     }
     
@@ -306,6 +334,13 @@ impl ChatRequestBuilder {
 
     pub fn options(mut self, options: Value) -> Self {
         self.options = Some(options);
+        self
+    }
+
+
+
+    pub fn options_from_builder(mut self, options_builder: OptionsBuilder) -> Self {
+        self.options = Some(serde_json::to_value(options_builder.build()).unwrap());
         self
     }
 
@@ -325,11 +360,16 @@ impl ChatRequestBuilder {
     }
 
     pub fn build(self) -> ChatRequest {
+
+        let options = self.options_builder.map(|builder| builder.build());
+        let options = options.map(|options| serde_json::to_value(options).unwrap());
+        let merged_options = merge_options(self.options, options);
+
         ChatRequest {
             model: self.model,
             messages: self.messages,
             format: self.format,
-            options: self.options,
+            options: Some(merged_options),
             template: self.template,
             stream: self.stream,
             keep_alive: self.keep_alive,
@@ -399,5 +439,40 @@ impl EmbeddingsRequestBuilder {
 impl From<EmbeddingsRequestBuilder> for String {
     fn from(request: EmbeddingsRequestBuilder) -> Self {
         serde_json::to_string(&request.build()).unwrap()
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn test_merge_options_both_some() {
+        let options = json!({"key1": "value1"});
+        let builder_options = json!({"key2": "value2"});
+        let result = merge_options(Some(options), Some(builder_options));
+        assert_eq!(result, json!({"key1": "value1", "key2": "value2"}));
+    }
+
+    #[test]
+    fn test_merge_options_only_options_some() {
+        let options = json!({"key1": "value1"});
+        let result = merge_options(Some(options), None);
+        assert_eq!(result, json!({"key1": "value1"}));
+    }
+
+    #[test]
+    fn test_merge_options_only_builder_options_some() {
+        let builder_options = json!({"key2": "value2"});
+        let result = merge_options(None, Some(builder_options));
+        assert_eq!(result, json!({"key2": "value2"}));
+    }
+
+    #[test]
+    fn test_merge_options_both_none() {
+        let result = merge_options(None, None);
+        assert_eq!(result, json!({}));
     }
 }

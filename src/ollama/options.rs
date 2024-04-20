@@ -1,38 +1,98 @@
 use serde::{Deserialize, Serialize};
 
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Options {
+    // The number of tokens to keep from the beginning of the generation.
     pub num_keep: Option<u32>,
+
+    // A seed for the random number generator to ensure reproducibility.
     pub seed: Option<u32>,
+
+    // The number of tokens to predict during generation.
     pub num_predict: Option<u32>,
+
+    // The number of highest probability vocabulary tokens to keep for top-k sampling.
     pub top_k: Option<u32>,
+
+    // The cumulative probability for top-p sampling; also known as nucleus sampling.
     pub top_p: Option<f32>,
+
+    // The z-score for truncation sampling.
     pub tfs_z: Option<f32>,
+
+    // The value used to scale the logits before applying softmax during generation.
     pub typical_p: Option<f32>,
+
+    // The number of tokens to consider for repetition penalties.
     pub repeat_last_n: Option<u32>,
+
+    // The temperature to use for generation. Higher values mean more randomness.
     pub temperature: Option<f32>,
+
+    // The penalty to apply to tokens that have been repeated.
     pub repeat_penalty: Option<f32>,
+
+    // The penalty for using tokens that are present in the context.
     pub presence_penalty: Option<f32>,
+
+    // The penalty for using tokens frequently in the generation.
     pub frequency_penalty: Option<f32>,
+
+    // A parameter for controlling diversity via the mirostat algorithm.
     pub mirostat: Option<u32>,
+
+    // The tau parameter for the mirostat algorithm, controlling diversity.
     pub mirostat_tau: Option<f32>,
+
+    // The eta parameter for the mirostat algorithm, controlling diversity.
     pub mirostat_eta: Option<f32>,
+
+    // Whether to penalize the generation of new lines.
     pub penalize_newline: Option<bool>,
+
+    // A list of strings where the generation should stop.
     pub stop: Option<Vec<String>>,
+
+    // Whether to use Non-Uniform Memory Access (NUMA) for memory allocation.
     pub numa: Option<bool>,
+
+    // The number of context tokens to use for the generation.
     pub num_ctx: Option<u32>,
+
+    // The number of batches to process in parallel.
     pub num_batch: Option<u32>,
+
+    // The number of gradient accumulation steps for question-answering tasks.
     pub num_gqa: Option<u32>,
+
+    // The number of GPUs to use for generation.
     pub num_gpu: Option<u32>,
+
+    // The index of the main GPU to use for generation.
     pub main_gpu: Option<u32>,
+
+    // Whether to use low VRAM mode.
     pub low_vram: Option<bool>,
+
+    // Whether to use 16-bit floating-point for key/value pairs in attention layers.
     pub f16_kv: Option<bool>,
+
+    // Whether to restrict generation to vocabulary tokens only.
     pub vocab_only: Option<bool>,
+
+    // Whether to use memory-mapped files for model parameters.
     pub use_mmap: Option<bool>,
+
+    // Whether to lock the model parameters in memory to prevent swapping.
     pub use_mlock: Option<bool>,
+
+    // The base frequency for the ROPE sinusoidal positional encoding.
     pub rope_frequency_base: Option<f32>,
+
+    // The scale for the ROPE sinusoidal positional encoding frequency.
     pub rope_frequency_scale: Option<f32>,
+
+    // The number of threads to use for generation.
     pub num_thread: Option<u32>,
 }
 
