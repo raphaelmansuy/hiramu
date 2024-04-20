@@ -5,6 +5,7 @@ use serde_json::Value;
 use pin_project::pin_project;
 
 use super::error::OllamaError;
+use crate::ollama::options::OptionsBuilder;
 
 /// Represents a request to generate text using the Ollama API.
 #[derive(Debug, Serialize, Clone)]
@@ -183,6 +184,11 @@ impl GenerateRequestBuilder {
     // If the value is not provided, the connection will be closed after the response is received.
     pub fn keep_alive(mut self, keep_alive: String) -> Self {
         self.keep_alive = Some(keep_alive);
+        self
+    }
+
+    pub fn options_from_builder(mut self, options_builder: OptionsBuilder) -> Self {
+        self.options = Some(serde_json::to_value(options_builder.build()).unwrap());
         self
     }
 
