@@ -1,6 +1,6 @@
 use futures::TryStreamExt;
 
-use crate::bedrock::model_info::{ModelInfo, ModelName};
+//use crate::bedrock::model_info::{ModelInfo, ModelName};
 use crate::bedrock::models::mistral::MistralClient;
 use crate::bedrock::models::mistral::MistralOptions;
 use crate::bedrock::models::mistral::MistralRequestBuilder;
@@ -55,6 +55,7 @@ pub async fn demo_mistra_with_stream(model_id: &str, prompt: &str) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::bedrock::model_info::{ModelInfo, ModelName};
 
     #[tokio::test]
     async fn test_demo_chat_mistral_with_stream() {

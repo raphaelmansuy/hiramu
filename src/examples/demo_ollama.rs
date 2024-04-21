@@ -4,20 +4,26 @@ use std::u32;
 use futures::stream::TryStream;
 use futures_util::TryStreamExt;
 
+use crate::ollama::options::OptionsBuilder;
 use crate::ollama::{ChatRequestBuilder, ChatResponse, Message};
 use crate::ollama::{GenerateRequestBuilder, GenerateResponse};
 use crate::ollama::OllamaClient;
 use crate::ollama::OllamaError;
 
 
-pub async fn chat_response_loop(max_loop: u32) {
+pub async fn chat_response_loop(max_loop: u32,question: Option<&str>) {
     let client = OllamaClient::new("http://localhost:11434".to_string());
 
     let mut messages = Vec::new();
     let mut counter = 0;
 
     loop {
-        let input = prompt_input("\nUser: ").unwrap();
+        // if question is provided, use it as the prompt
+        let input = match question {
+            Some(q) => q.to_string(),
+            None => prompt_input("\n> ").unwrap(),
+        };
+        
         messages.push(Message {
             role: "user".to_string(),
             content: input,
@@ -51,14 +57,24 @@ pub async fn chat_response_loop(max_loop: u32) {
     }
 }
 
-pub async fn generate_response_loop(max_loop: usize) {
+pub async fn generate_response_loop(max_loop: usize, question: Option<&str>) {
     let client = OllamaClient::new("http://localhost:11434".to_string());
 
     let mut counter = 0;
     loop {
-        let input = prompt_input("\n> ").unwrap();
+        // if question is provided, use it as the prompt
+        let input = match question {
+            Some(q) => q.to_string(),
+            None => prompt_input("\n> ").unwrap(),
+        };
         let request = GenerateRequestBuilder::new("mistral".to_string())
             .prompt(input)
+            .options_from_builder(
+                OptionsBuilder::new()
+                    .top_k(50)
+                    .top_p(0.9)
+                    .temperature(0.9)
+            )
             .build();
 
         let response = client.generate(request).await.unwrap();
@@ -119,13 +135,15 @@ pub async fn print_generate_response(
 #[cfg(test)]
 mod tests {
 
+    use super::*;
+
     #[tokio::test]
     async fn test_chat_response_loop() {
-        // chat_response_loop(1).await;
+         chat_response_loop(1, Some("What is the capital of France ?")).await;
     }
 
     #[tokio::test]
     async fn test_generate_response_loop() {
-        //      generate_response_loop(1).await;
+        generate_response_loop(1,Some("Quelle est la couleur du cheval blanc d'Henri IV ?")).await;
     }
 }

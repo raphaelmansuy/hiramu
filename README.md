@@ -20,7 +20,7 @@ To start using Hiramu in your Rust project, add the following to your `Cargo.tom
 
 ```toml
 [dependencies]
-hiramu = "0.1.14"
+hiramu = "0.1.15"
 ```
 
 ## Examples
@@ -101,6 +101,7 @@ use hiramu::ollama::model::{GenerateRequestBuilder};
 
 async fn generating_text_with_ollama() {
     let client = OllamaClient::new("http://localhost:11434".to_string());
+    
     let request = GenerateRequestBuilder::new("mistral".to_string())
         .prompt("Once upon a time".to_string())
         .build();
@@ -116,6 +117,49 @@ async fn generating_text_with_ollama() {
         .await
         .unwrap();
 }
+```
+
+### Chat with Ollama
+```rust
+
+use futures::TryStreamExt;
+use std::io::{self, Write};
+
+use hiramu::ollama::{ChatRequestBuilder, Message, OllamaClient, OllamaError, OptionsBuilder};
+
+async fn demo_chat_with_ollama_with_stream() -> Result<(), OllamaError> {
+    let client = OllamaClient::new("http://localhost:11434".to_string());
+
+    let messages = vec![Message::new(
+        "user".to_string(),
+        "What is the capital of France?  "
+            .to_string(),
+    )];
+
+    let options = OptionsBuilder::new()
+        .num_predict(100) // Limit the number of predicted tokens
+        .temperature(0.4);
+
+    let request = ChatRequestBuilder::new("mistral".to_string())
+        .messages(messages.to_owned())
+        .options_from_builder(options)
+        .build();
+
+    let response_stream = client.chat(request).await?;
+
+    let result = response_stream
+        .try_for_each(|chunk| async {
+            let message = chunk.message;
+            print!("{}", message.content);
+            // Flush the output to ensure the prompt is displayed.
+            io::stdout().flush().unwrap();
+            Ok(())
+        })
+        .await;
+
+    result
+}
+
 ```
 
 ### Chatting with Claude using Bedrock
@@ -364,7 +408,8 @@ Here is a table with a description for each example:
 
 | Example | Path | Description |
 |---------|------|--------------|
-| `demo_ollama` | [src/examples/demo_ollama.rs](src/examples/demo_ollama.rs) | A simple example that demonstrates how to use the Ollama API to generate responses to chat messages. |
+| `demo_ollama` | [src/examples/demo_ollama.rs](src/examples/demo_ollama.rs) | A simple example that demonstrates how to use the Ollama API to generate responses. |
+| `demo_chat_with_ollama` | [src/examples/demo_chat_with_ollama.rs](src/examples/demo_chat_with_ollama.rs) | A simple example that demonstrates how to use the Ollama Chat API. |
 | `demo_bedrock_raw_generate` | [src/examples/demo_bedrock_raw_generate.rs](src/examples/demo_bedrock_raw_generate.rs) | Demonstrates how to generate a raw response from the Bedrock service using the `generate_raw` method. |
 | `demo_bedrock_raw_stream` | [src/examples/demo_bedrock_raw_stream.rs](src/examples/demo_bedrock_raw_stream.rs) | Demonstrates how to generate a raw stream of responses from the Bedrock service using the `generate_raw_stream` method. |
 | `demo_bedrock_raw_mistral` | [src/examples/demo_bedrock_raw_mistral.rs](src/examples/demo_bedrock_raw_mistral.rs) | Demonstrates how to generate a raw stream of responses from the Mistral model in the Bedrock service. |

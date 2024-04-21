@@ -65,6 +65,21 @@ impl OllamaClient {
         Ok(stream)
     }
 
+    // new method that generate a text
+    pub async fn generate_text(&self, request: GenerateRequest) -> Result<String, OllamaError> {
+        let stream = self.generate(request).await?;
+
+        // collect the stream into a single string
+        let text = stream
+            .map_ok(|response| response.response)
+            .try_fold(String::new(), |mut acc, text| async move {
+                acc.push_str(&text);
+                Ok(acc)
+            })
+            .await?;
+        Ok(text)
+    }
+
     pub async fn chat(
         &self,
         request: ChatRequest,
@@ -110,9 +125,69 @@ impl OllamaClient {
 
 #[cfg(test)]
 mod tests {
-    use crate::ollama::EmbeddingsRequestBuilder;
+    use crate::ollama::{options::OptionsBuilder, EmbeddingsRequestBuilder, Message};
 
     use super::*;
+
+    #[tokio::test]
+    async fn test_ollama_chat() {
+        let client = OllamaClient::new("http://localhost:11434".to_string());
+
+        let request = crate::ollama::ChatRequestBuilder::new("llama3:instruct".to_string())
+            .add_message(Message::new(
+                "user".to_owned(),
+                "What is the capital of France ?".to_owned(),
+            ))
+            .build();
+
+        let stream = client.chat(request).await;
+
+        let stream = match stream {
+            Ok(stream) => stream,
+            Err(err) => panic!("Error: {:?}", err),
+        };
+
+        let response = stream
+            .map_ok(|response| response.message)
+            .try_fold(String::new(), |mut acc, message| async move {
+                acc.push_str(&message.content);
+                Ok(acc)
+            })
+            .await;
+
+        let response = match response {
+            Ok(response) => response,
+            Err(err) => panic!("Error: {:?}", err),
+        };
+
+        print!("Response: {:?}", response);
+
+        assert!(!response.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_ollama_max_predictions() {
+        let client = OllamaClient::new("http://localhost:11434".to_string());
+
+        let options_builder = OptionsBuilder::new().num_predict(1);
+
+        let request = crate::ollama::GenerateRequestBuilder::new("llama3:instruct".to_string())
+            .prompt("What is the capital of France ? Anwser with only one word".to_owned())
+            .stream(false)
+            .options_from_builder(options_builder)
+            .build();
+
+        let response = client.generate_text(request).await;
+
+        let response = match response {
+            Ok(response) => response,
+            Err(err) => panic!("Error: {:?}", err),
+        };
+
+        print!("Response: {:?}", response);
+
+        assert!(response.len() == 5);
+    }
 
     #[tokio::test]
     async fn test_embeddings() {

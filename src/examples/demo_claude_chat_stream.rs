@@ -71,12 +71,6 @@ fn display_streamresult_data(data: StreamResultData) {
         StreamResultData::MessageDelta(message_delta) => {
             println!("MessageDelta: {:?}", message_delta);
         }
-        StreamResultData::ContentBlockStart(content_block_start) => {
-            println!("ContentBlockStart: {:?}", content_block_start);
-        }
-        StreamResultData::ContentBlockStop(content_block_end) => {
-            println!("ContentBlockEnd: {:?}", content_block_end);
-        }
         StreamResultData::ContentBlockDelta(content_block_delta) => {
             println!("ContentBlockDelta: {:?}", content_block_delta);
         }
