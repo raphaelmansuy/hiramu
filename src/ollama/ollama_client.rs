@@ -125,9 +125,45 @@ impl OllamaClient {
 
 #[cfg(test)]
 mod tests {
-    use crate::ollama::{options::OptionsBuilder, EmbeddingsRequestBuilder};
+    use crate::ollama::{options::OptionsBuilder, EmbeddingsRequestBuilder, Message};
 
     use super::*;
+
+    #[tokio::test]
+    async fn test_ollama_chat() {
+        let client = OllamaClient::new("http://localhost:11434".to_string());
+
+        let request = crate::ollama::ChatRequestBuilder::new("llama3:instruct".to_string())
+            .add_message(Message::new(
+                "user".to_owned(),
+                "What is the capital of France ?".to_owned(),
+            ))
+            .build();
+
+        let stream = client.chat(request).await;
+
+        let stream = match stream {
+            Ok(stream) => stream,
+            Err(err) => panic!("Error: {:?}", err),
+        };
+
+        let response = stream
+            .map_ok(|response| response.message)
+            .try_fold(String::new(), |mut acc, message| async move {
+                acc.push_str(&message.content);
+                Ok(acc)
+            })
+            .await;
+
+        let response = match response {
+            Ok(response) => response,
+            Err(err) => panic!("Error: {:?}", err),
+        };
+
+        print!("Response: {:?}", response);
+
+        assert!(!response.is_empty());
+    }
 
     #[tokio::test]
     async fn test_ollama_max_predictions() {

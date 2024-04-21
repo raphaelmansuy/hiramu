@@ -268,6 +268,25 @@ pub struct Message {
     pub images: Vec<String>,
 }
 
+// A convenient method to create a new message.
+impl Message {
+    pub fn new(role: String, content: String) -> Self {
+        Self {
+            role,
+            content,
+            images: Vec::new(),
+        }
+    }
+}
+
+// A convenient method to add an image to a message.
+impl Message {
+    pub fn add_image(mut self, image: String) -> Self {
+        self.images.push(image);
+        self
+    }
+}
+
 /// Represents a response from the Ollama API for a chat request.
 #[pin_project]
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -324,6 +343,11 @@ impl ChatRequestBuilder {
     
     pub fn messages(mut self, messages: Vec<Message>) -> Self {
         self.messages = messages;
+        self
+    }
+
+    pub fn add_message(mut self, message: Message) -> Self {
+        self.messages.push(message);
         self
     }
 
